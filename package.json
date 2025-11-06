@@ -1,0 +1,23 @@
+{
+  "name": "teamly",
+  "version": "1.0.0",
+  "description": "Teamly - Aplicación completa con backend y frontend",
+  "private": true,
+  "scripts": {
+    "backend": "cd backend && npm start",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "teamly",
+    "react-native",
+    "expo",
+    "express",
+    "backend",
+    "frontend"
+  ],
+  "author": "",
+  "license": "ISC"
+}
+

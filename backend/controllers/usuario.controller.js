@@ -117,3 +117,46 @@ exports.delete = async (req, res, next) => {
   }
 };
 
+// Login de usuario
+exports.login = async (req, res, next) => {
+  try {
+    const { email, contrasena } = req.body;
+    
+    if (!email || !contrasena) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email y contraseña son requeridos'
+      });
+    }
+    
+    // Buscar usuario por email (incluyendo contraseña para validación)
+    const usuario = await Usuario.findByEmail(email);
+    
+    if (!usuario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email o contraseña incorrectos'
+      });
+    }
+    
+    // Validar contraseña (comparación simple - en producción usar bcrypt)
+    if (usuario.contrasena !== contrasena) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email o contraseña incorrectos'
+      });
+    }
+    
+    // Retornar datos del usuario sin la contraseña
+    const { contrasena: _, ...usuarioSinPassword } = usuario;
+    
+    res.json({
+      success: true,
+      message: 'Login exitoso',
+      data: usuarioSinPassword
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

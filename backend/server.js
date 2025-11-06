@@ -11,9 +11,11 @@ const startServer = async () => {
     await connectDB();
     
     // Iniciar servidor
-    app.listen(PORT, () => {
+    // Escuchar en 0.0.0.0 para permitir conexiones desde dispositivos en la red local
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
       console.log(`📦 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌐 Accesible en: http://localhost:${PORT} y http://192.168.0.67:${PORT}`);
     });
   } catch (error) {
     console.error('❌ Error al iniciar el servidor:', error);

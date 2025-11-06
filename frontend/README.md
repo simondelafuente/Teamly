@@ -63,9 +63,25 @@ frontend/
 └── package.json     # Dependencias del proyecto
 ```
 
+## Características Implementadas
+
+### Pantalla de Login
+- Diseño moderno basado en la especificación
+- Validación de campos
+- Integración con el backend para autenticación
+- Almacenamiento de sesión con AsyncStorage
+- Navegación automática después del login exitoso
+
 ## Desarrollo
 
 Para desarrollo con hot reload, simplemente ejecuta `npm start` y mantén el servidor corriendo. Los cambios se reflejarán automáticamente en tu dispositivo o emulador.
+
+### Autenticación
+
+La aplicación incluye un sistema de autenticación completo:
+- **Login**: POST `/api/usuarios/login` con email y contraseña
+- **Almacenamiento**: Los datos del usuario se guardan en AsyncStorage
+- **Navegación**: Después del login exitoso, se navega automáticamente a la pantalla principal
 
 ### Configuración de API para dispositivos físicos
 

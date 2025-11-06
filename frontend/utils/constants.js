@@ -2,12 +2,15 @@
 
 export const COLORS = {
   primary: '#6200ee',
+  primaryBlue: '#007AFF', // Azul brillante para botones principales
   secondary: '#03dac6',
   background: '#ffffff',
   surface: '#f5f5f5',
+  inputBackground: '#E8E0F0', // Lavanda claro para inputs
   error: '#b00020',
   text: '#000000',
   textSecondary: '#666666',
+  textDark: '#333333',
   border: '#e0e0e0',
 };
 
