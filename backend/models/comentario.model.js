@@ -1,4 +1,3 @@
-// Modelo de Comentario
 const { pool } = require('../config/database');
 
 class Comentario {
@@ -132,6 +131,8 @@ class Comentario {
     }
   }
 }
+
+//Obtener comentarios por publicación
 
 module.exports = Comentario;
 

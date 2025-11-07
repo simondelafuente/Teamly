@@ -9,18 +9,15 @@ import { authService } from './services/auth';
 const Stack = createNativeStackNavigator();
 
 
-const SPLASH_SCREEN_DURATION = 9000; // 2000ms = 2 segundos
-
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // Mostrar splash screen por el tiempo configurado
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
-    }, SPLASH_SCREEN_DURATION);
+    }, 4000); //4 segundos
 
     checkAuthStatus();
 
@@ -39,7 +36,6 @@ export default function App() {
     }
   };
 
-  // Mostrar splash screen mientras se carga o durante el tiempo mínimo
   if (showSplash || isLoading) {
     return <SplashScreen />;
   }
@@ -49,7 +45,7 @@ export default function App() {
       <Stack.Navigator
         initialRouteName={isAuthenticated ? 'Home' : 'Login'}
         screenOptions={{
-          headerShown: false, // Ocultar header para pantalla de login
+          headerShown: false,
         }}
       >
         <Stack.Screen 

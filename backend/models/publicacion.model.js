@@ -1,4 +1,3 @@
-// Modelo de Publicación
 const { pool } = require('../config/database');
 
 class Publicacion {

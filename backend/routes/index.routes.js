@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-// Importar rutas
 const usuarioRoutes = require('./usuario.routes');
 const actividadRoutes = require('./actividad.routes');
 const publicacionRoutes = require('./publicacion.routes');
@@ -21,7 +20,6 @@ router.use('/mensajes', mensajeRoutes);
 router.get('/', (req, res) => {
   res.json({
     message: 'API Teamly funcionando correctamente',
-    version: '1.0.0',
     endpoints: {
       usuarios: '/api/usuarios',
       actividades: '/api/actividades',

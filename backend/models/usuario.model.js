@@ -1,4 +1,3 @@
-// Modelo de Usuario
 const { pool } = require('../config/database');
 
 class Usuario {

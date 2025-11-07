@@ -1,4 +1,3 @@
-// Modelo de Actividad
 const { pool } = require('../config/database');
 
 class Actividad {

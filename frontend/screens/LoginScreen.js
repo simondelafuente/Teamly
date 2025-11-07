@@ -31,7 +31,6 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await authService.login(email, password);
       if (response.success) {
-        // Navegar a la pantalla principal después del login exitoso
         navigation.replace('Home');
       }
     } catch (error) {
@@ -41,13 +40,13 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  //navega a pantalla de registro
   const handleSignUp = () => {
-    // Navegar a la pantalla de registro (cuando esté disponible)
     Alert.alert('Registro', 'Pantalla de registro próximamente');
   };
 
+  //recuperar contraseña
   const handleForgotPassword = () => {
-    // Navegar a la pantalla de recuperación de contraseña (cuando esté disponible)
     Alert.alert('Recuperar Contraseña', 'Funcionalidad próximamente');
   };
 

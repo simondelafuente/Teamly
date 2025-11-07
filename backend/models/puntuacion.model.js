@@ -1,4 +1,3 @@
-// Modelo de Puntuación
 const { pool } = require('../config/database');
 
 class Puntuacion {

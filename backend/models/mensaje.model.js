@@ -1,4 +1,3 @@
-// Modelo de Mensaje
 const { pool } = require('../config/database');
 
 class Mensaje {
