@@ -1,0 +1,855 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Platform,
+  Alert,
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { COLORS, SIZES } from '../utils/constants';
+import { apiRequest } from '../config/api';
+import { authService } from '../services/auth';
+
+// Función para formatear la fecha a formato 'yyyy-MM-dd'
+function formatDate(date) {
+  if (!date) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${year}-${month}-${day}`;
+}
+
+// Función para formatear la hora a formato 'HH:mm:ss'
+function formatTime(date) {
+  if (!date) return '';
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}:00`;
+}
+
+// Función para ajustar la fecha
+function adjustDate(date) {
+  const adjustedDate = new Date(date);
+  adjustedDate.setMinutes(adjustedDate.getMinutes() + adjustedDate.getTimezoneOffset());
+  adjustedDate.setHours(0, 0, 0, 0);
+  return adjustedDate;
+}
+
+// Componente para input de fecha en web
+const WebDateInput = ({ value, onChange, style }) => {
+  if (Platform.OS !== 'web') {
+    return null;
+  }
+
+  return React.createElement('input', {
+    type: 'date',
+    value: value,
+    onChange: (e) => onChange(e.target.value),
+    style: {
+      flex: 1,
+      marginLeft: 8,
+      fontSize: 16,
+      color: COLORS.textDark,
+      backgroundColor: 'transparent',
+      border: 'none',
+      outline: 'none',
+      fontFamily: 'inherit',
+      ...style,
+    },
+  });
+};
+
+// Componente para input de hora en web
+const WebTimeInput = ({ value, onChange, style }) => {
+  if (Platform.OS !== 'web') {
+    return null;
+  }
+
+  return React.createElement('input', {
+    type: 'time',
+    value: value,
+    onChange: (e) => onChange(e.target.value),
+    style: {
+      flex: 1,
+      marginLeft: 8,
+      fontSize: 16,
+      color: COLORS.textDark,
+      backgroundColor: 'transparent',
+      border: 'none',
+      outline: 'none',
+      fontFamily: 'inherit',
+      ...style,
+    },
+  });
+};
+
+const CreatePublicationScreen = ({ navigation }) => {
+  const [titulo, setTitulo] = useState('');
+  const [actividadSeleccionada, setActividadSeleccionada] = useState(null);
+  const [direccion, setDireccion] = useState('');
+  const [zona, setZona] = useState('');
+  const [vacantes, setVacantes] = useState('');
+  const [fecha, setFecha] = useState(null);
+  const [hora, setHora] = useState(null);
+  const [actividades, setActividades] = useState([]);
+  const [showActividadDropdown, setShowActividadDropdown] = useState(false);
+  const [showZonaDropdown, setShowZonaDropdown] = useState(false);
+  const [actividadSearch, setActividadSearch] = useState('');
+  const [zonaSearch, setZonaSearch] = useState('');
+  const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
+  const [mostrarTimePicker, setMostrarTimePicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
+
+  // Zonas disponibles (mismo listado que en PublicationsScreen)
+  const zonas = [
+    'Recoleta',
+    'Palermo',
+    'San Telmo',
+    'Belgrano',
+    'Microcentro (Centro)',
+    'Caballito',
+    'Villa Urquiza',
+    'Almagro',
+    'Villa Devoto',
+    'Puerto Madero',
+  ];
+
+  // Cargar actividades y datos del usuario
+  useEffect(() => {
+    cargarActividades();
+    cargarUsuario();
+  }, []);
+
+  const cargarUsuario = async () => {
+    try {
+      const userData = await authService.getUserData();
+      if (userData && userData.id_usuario) {
+        setUserId(userData.id_usuario);
+      }
+    } catch (error) {
+      console.error('Error al cargar usuario:', error);
+    }
+  };
+
+  const cargarActividades = async () => {
+    try {
+      const response = await apiRequest('/actividades');
+      if (response.success && Array.isArray(response.data)) {
+        setActividades(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching actividades:', error);
+      Alert.alert('Error', 'No se pudieron cargar las actividades');
+    }
+  };
+
+  // Filtrar actividades por búsqueda
+  const actividadesFiltradas = actividades.filter((actividad) =>
+    actividad.nombre_actividad
+      .toLowerCase()
+      .includes(actividadSearch.toLowerCase())
+  );
+
+  // Filtrar zonas por búsqueda
+  const zonasFiltradas = zonas.filter((zonaItem) =>
+    zonaItem.toLowerCase().includes(zonaSearch.toLowerCase())
+  );
+
+  // Validar formulario
+  const validarFormulario = () => {
+    if (!titulo.trim()) {
+      Alert.alert('Error', 'Por favor ingresa un título');
+      return false;
+    }
+    if (!actividadSeleccionada) {
+      Alert.alert('Error', 'Por favor selecciona una actividad');
+      return false;
+    }
+    if (!direccion.trim()) {
+      Alert.alert('Error', 'Por favor ingresa una dirección');
+      return false;
+    }
+    if (!zona) {
+      Alert.alert('Error', 'Por favor selecciona una zona');
+      return false;
+    }
+    if (!vacantes || isNaN(parseInt(vacantes)) || parseInt(vacantes) <= 0) {
+      Alert.alert('Error', 'Por favor ingresa un número válido de vacantes disponibles');
+      return false;
+    }
+    if (!fecha) {
+      Alert.alert('Error', 'Por favor selecciona una fecha');
+      return false;
+    }
+    if (!hora) {
+      Alert.alert('Error', 'Por favor selecciona una hora');
+      return false;
+    }
+    if (!userId) {
+      Alert.alert('Error', 'No se pudo identificar al usuario. Por favor inicia sesión nuevamente');
+      return false;
+    }
+    return true;
+  };
+
+  // Crear publicación
+  const crearPublicacion = async () => {
+    if (!validarFormulario()) return;
+
+    setLoading(true);
+    try {
+      const publicacionData = {
+        titulo: titulo.trim(),
+        direccion: direccion.trim(),
+        zona: zona,
+        vacantes_disponibles: parseInt(vacantes),
+        fecha: formatDate(fecha),
+        hora: formatTime(hora),
+        id_usuario: userId,
+        id_actividad: actividadSeleccionada.id_actividad,
+      };
+
+      const response = await apiRequest('/publicaciones', {
+        method: 'POST',
+        body: publicacionData,
+      });
+
+      if (response.success) {
+        // Limpiar formulario
+        setTitulo('');
+        setActividadSeleccionada(null);
+        setDireccion('');
+        setZona('');
+        setVacantes('');
+        setFecha(null);
+        setHora(null);
+        
+        // Mostrar mensaje de éxito y navegar automáticamente
+        Alert.alert(
+          '¡Publicación Creada!',
+          'Tu publicación ha sido creada exitosamente y ya está visible para todos.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Publications', { refresh: true }),
+            },
+          ],
+          { cancelable: false }
+        );
+        
+        // Navegar automáticamente después de 1.5 segundos
+        setTimeout(() => {
+          navigation.navigate('Publications', { refresh: true });
+        }, 1500);
+      } else {
+        throw new Error(response.message || 'Error al crear la publicación');
+      }
+    } catch (error) {
+      console.error('Error al crear publicación:', error);
+      Alert.alert('Error', error.message || 'Error al crear la publicación');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="dark" />
+      
+      {/* Header con botón de volver */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Create Publication</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Campo Título */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ingresa el título de la publicación"
+            placeholderTextColor={COLORS.textSecondary}
+            value={titulo}
+            onChangeText={setTitulo}
+            maxLength={100}
+          />
+        </View>
+
+        {/* Campo Actividad - Dropdown con búsqueda */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Activity</Text>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => {
+              setShowActividadDropdown(!showActividadDropdown);
+            }}
+          >
+            <Text
+              style={[
+                styles.dropdownText,
+                !actividadSeleccionada && styles.dropdownPlaceholder,
+              ]}
+            >
+              {actividadSeleccionada
+                ? actividadSeleccionada.nombre_actividad
+                : 'Selecciona una actividad'}
+            </Text>
+            <Ionicons
+              name={showActividadDropdown ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={COLORS.textSecondary}
+            />
+          </TouchableOpacity>
+          {showActividadDropdown && (
+            <View style={styles.dropdownList}>
+              <View style={styles.searchContainer}>
+                <Ionicons name="search" size={20} color={COLORS.textSecondary} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Buscar actividad..."
+                  placeholderTextColor={COLORS.textSecondary}
+                  value={actividadSearch}
+                  onChangeText={setActividadSearch}
+                />
+                {actividadSearch.length > 0 && (
+                  <TouchableOpacity onPress={() => setActividadSearch('')}>
+                    <Ionicons name="close-circle" size={20} color={COLORS.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                {actividadesFiltradas.map((actividad) => (
+                  <TouchableOpacity
+                    key={actividad.id_actividad}
+                    style={[
+                      styles.dropdownItem,
+                      actividadSeleccionada?.id_actividad === actividad.id_actividad &&
+                        styles.dropdownItemActive,
+                    ]}
+                    onPress={() => {
+                      setActividadSeleccionada(actividad);
+                      setShowActividadDropdown(false);
+                      setActividadSearch('');
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        actividadSeleccionada?.id_actividad === actividad.id_actividad &&
+                          styles.dropdownItemTextActive,
+                      ]}
+                    >
+                      {actividad.nombre_actividad}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                {actividadesFiltradas.length === 0 && (
+                  <View style={styles.dropdownItem}>
+                    <Text style={styles.dropdownItemText}>
+                      No se encontraron actividades
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+
+        {/* Campo Dirección */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Address</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ingresa la dirección del evento"
+            placeholderTextColor={COLORS.textSecondary}
+            value={direccion}
+            onChangeText={setDireccion}
+            multiline
+            numberOfLines={2}
+          />
+        </View>
+
+        {/* Campo Zona - Dropdown con búsqueda */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Zone</Text>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => {
+              setShowZonaDropdown(!showZonaDropdown);
+              setShowActividadDropdown(false);
+            }}
+          >
+            <Text
+              style={[
+                styles.dropdownText,
+                !zona && styles.dropdownPlaceholder,
+              ]}
+            >
+              {zona || 'Selecciona una zona'}
+            </Text>
+            <Ionicons
+              name={showZonaDropdown ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={COLORS.textSecondary}
+            />
+          </TouchableOpacity>
+          {showZonaDropdown && (
+            <View style={styles.dropdownList}>
+              <View style={styles.searchContainer}>
+                <Ionicons name="search" size={20} color={COLORS.textSecondary} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Buscar zona..."
+                  placeholderTextColor={COLORS.textSecondary}
+                  value={zonaSearch}
+                  onChangeText={setZonaSearch}
+                />
+                {zonaSearch.length > 0 && (
+                  <TouchableOpacity onPress={() => setZonaSearch('')}>
+                    <Ionicons name="close-circle" size={20} color={COLORS.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </View>
+              <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                {zonasFiltradas.map((zonaItem) => (
+                  <TouchableOpacity
+                    key={zonaItem}
+                    style={[
+                      styles.dropdownItem,
+                      zona === zonaItem && styles.dropdownItemActive,
+                    ]}
+                    onPress={() => {
+                      setZona(zonaItem);
+                      setShowZonaDropdown(false);
+                      setZonaSearch('');
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownItemText,
+                        zona === zonaItem && styles.dropdownItemTextActive,
+                      ]}
+                    >
+                      {zonaItem}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                {zonasFiltradas.length === 0 && (
+                  <View style={styles.dropdownItem}>
+                    <Text style={styles.dropdownItemText}>
+                      No se encontraron zonas
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+
+        {/* Campo Vacantes Disponibles */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Available Spots</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: 5"
+            placeholderTextColor={COLORS.textSecondary}
+            value={vacantes}
+            onChangeText={(text) => {
+              // Solo permitir números
+              const numericValue = text.replace(/[^0-9]/g, '');
+              setVacantes(numericValue);
+            }}
+            keyboardType="numeric"
+            maxLength={3}
+          />
+          {vacantes && (
+            <Text style={styles.helperText}>
+              {parseInt(vacantes) === 1 
+                ? '1 vacante disponible' 
+                : `${vacantes} vacantes disponibles`}
+            </Text>
+          )}
+        </View>
+
+        {/* Campo Fecha */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Date</Text>
+          {Platform.OS === 'web' ? (
+            <View style={styles.dateInputContainer}>
+              <Ionicons name="calendar-outline" size={20} color={COLORS.primaryBlue} />
+              <WebDateInput
+                value={fecha ? formatDate(fecha) : ''}
+                onChange={(dateString) => {
+                  if (dateString) {
+                    const selectedDate = new Date(dateString);
+                    setFecha(adjustDate(selectedDate));
+                  } else {
+                    setFecha(null);
+                  }
+                }}
+                style={styles.webDateInput}
+              />
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={() => setMostrarDatePicker(true)}
+                style={styles.dateButton}
+              >
+                <Ionicons name="calendar-outline" size={20} color={COLORS.primaryBlue} />
+                <Text style={styles.dateButtonText}>
+                  {fecha ? formatDate(fecha) : 'Selecciona una fecha'}
+                </Text>
+              </TouchableOpacity>
+              {mostrarDatePicker && (
+                <DateTimePicker
+                  value={fecha || new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  minimumDate={new Date()}
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === 'android') {
+                      setMostrarDatePicker(false);
+                    }
+                    if (selectedDate) {
+                      setFecha(adjustDate(selectedDate));
+                      if (Platform.OS === 'ios') {
+                        setMostrarDatePicker(false);
+                      }
+                    } else if (Platform.OS === 'android') {
+                      setMostrarDatePicker(false);
+                    }
+                  }}
+                />
+              )}
+            </>
+          )}
+        </View>
+
+        {/* Campo Hora */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Schedule</Text>
+          {Platform.OS === 'web' ? (
+            <View style={styles.dateInputContainer}>
+              <Ionicons name="time-outline" size={20} color={COLORS.primaryBlue} />
+              <WebTimeInput
+                value={
+                  hora
+                    ? `${String(hora.getHours()).padStart(2, '0')}:${String(
+                        hora.getMinutes()
+                      ).padStart(2, '0')}`
+                    : ''
+                }
+                onChange={(timeString) => {
+                  if (timeString) {
+                    const [hours, minutes] = timeString.split(':');
+                    const timeDate = new Date();
+                    timeDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                    setHora(timeDate);
+                  } else {
+                    setHora(null);
+                  }
+                }}
+                style={styles.webDateInput}
+              />
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={() => setMostrarTimePicker(true)}
+                style={styles.dateButton}
+              >
+                <Ionicons name="time-outline" size={20} color={COLORS.primaryBlue} />
+                <Text style={styles.dateButtonText}>
+                  {hora
+                    ? `${String(hora.getHours()).padStart(2, '0')}:${String(
+                        hora.getMinutes()
+                      ).padStart(2, '0')}`
+                    : 'Selecciona una hora'}
+                </Text>
+              </TouchableOpacity>
+              {mostrarTimePicker && (
+                <DateTimePicker
+                  value={hora || new Date()}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedTime) => {
+                    if (Platform.OS === 'android') {
+                      setMostrarTimePicker(false);
+                    }
+                    if (selectedTime) {
+                      setHora(selectedTime);
+                      if (Platform.OS === 'ios') {
+                        setMostrarTimePicker(false);
+                      }
+                    } else if (Platform.OS === 'android') {
+                      setMostrarTimePicker(false);
+                    }
+                  }}
+                />
+              )}
+            </>
+          )}
+        </View>
+
+        {/* Botón Create */}
+        <TouchableOpacity
+          style={[styles.createButton, loading && styles.buttonDisabled]}
+          onPress={crearPublicacion}
+          disabled={loading}
+        >
+          <Text style={styles.createButtonText}>
+            {loading ? 'Creando...' : 'Create'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Footer de Navegación */}
+      <View style={styles.footerContainer}>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate('Publications')}
+        >
+          <Ionicons name="home" size={30} color="#FFFFFF" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => navigation.navigate('CreatePublication')}
+        >
+          <Ionicons name="add-circle" size={30} color="#FFFFFF" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => {
+            Alert.alert('Mensajes', 'Funcionalidad próximamente');
+          }}
+        >
+          <Ionicons name="chatbubble" size={30} color="#FFFFFF" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.footerButton}
+          onPress={() => {
+            Alert.alert('Perfil', 'Funcionalidad próximamente');
+          }}
+        >
+          <Ionicons name="person" size={30} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SIZES.padding,
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
+    paddingBottom: SIZES.padding,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  backButton: {
+    padding: SIZES.padding / 2,
+  },
+  headerTitle: {
+    fontSize: SIZES.xlarge,
+    fontWeight: 'bold',
+    color: COLORS.textDark,
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: SIZES.padding * 2,
+    paddingBottom: 100,
+  },
+  inputContainer: {
+    marginBottom: SIZES.margin * 1.5,
+    zIndex: 1,
+  },
+  label: {
+    fontSize: SIZES.medium,
+    fontWeight: '600',
+    color: COLORS.textDark,
+    marginBottom: SIZES.margin / 2,
+  },
+  input: {
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.padding,
+    fontSize: SIZES.medium,
+    color: COLORS.textDark,
+    minHeight: 50,
+    textAlignVertical: 'top',
+  },
+  helperText: {
+    fontSize: SIZES.small,
+    color: COLORS.textSecondary,
+    marginTop: SIZES.margin / 2,
+    fontStyle: 'italic',
+  },
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.padding,
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  dropdownText: {
+    fontSize: SIZES.medium,
+    color: COLORS.textDark,
+    flex: 1,
+  },
+  dropdownPlaceholder: {
+    color: COLORS.textSecondary,
+  },
+  dropdownList: {
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    maxHeight: 300,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    zIndex: 1000,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.padding / 2,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: SIZES.medium,
+    color: COLORS.textDark,
+    marginLeft: SIZES.margin / 2,
+    paddingVertical: SIZES.padding / 2,
+  },
+  dropdownScroll: {
+    maxHeight: 250,
+  },
+  dropdownItem: {
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.padding,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  dropdownItemActive: {
+    backgroundColor: COLORS.primaryBlue + '20',
+  },
+  dropdownItemText: {
+    fontSize: SIZES.medium,
+    color: COLORS.textDark,
+  },
+  dropdownItemTextActive: {
+    color: COLORS.primaryBlue,
+    fontWeight: '600',
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.padding,
+    minHeight: 50,
+    justifyContent: 'space-between',
+  },
+  dateButtonText: {
+    fontSize: SIZES.medium,
+    color: COLORS.textDark,
+    marginLeft: SIZES.margin / 2,
+    flex: 1,
+  },
+  dateInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 12,
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: SIZES.padding,
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  webDateInput: {
+    // Los estilos se aplican directamente en el componente
+  },
+  createButton: {
+    backgroundColor: COLORS.primaryBlue,
+    borderRadius: 16,
+    paddingVertical: SIZES.padding + 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SIZES.margin * 2,
+    minHeight: 56,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  createButtonText: {
+    fontSize: SIZES.large,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: COLORS.primaryBlue,
+    paddingVertical: 15,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  footerButton: {
+    padding: SIZES.padding / 2,
+  },
+});
+
+export default CreatePublicationScreen;
+

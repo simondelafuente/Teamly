@@ -9,6 +9,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Servir archivos estáticos (imágenes subidas)
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Rutas
 const indexRoutes = require('./routes/index.routes');
 app.use('/api', indexRoutes);

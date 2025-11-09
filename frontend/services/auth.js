@@ -76,6 +76,74 @@ export const authService = {
       return false;
     }
   },
+
+  // Registro de usuario
+  register: async (userData, imageUri = null) => {
+    try {
+      let response;
+
+      // Si hay imagen, usar FormData
+      if (imageUri && typeof imageUri === 'string' && imageUri.startsWith('file://')) {
+        const formData = new FormData();
+        formData.append('nombre_completo', userData.nombre_completo);
+        formData.append('email', userData.email);
+        formData.append('contrasena', userData.contrasena);
+        formData.append('pregunta_seguridad', userData.pregunta_seguridad);
+        formData.append('respuesta_seguridad', userData.respuesta_seguridad);
+        
+        // Agregar imagen
+        const filename = imageUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('foto_perfil', {
+          uri: imageUri,
+          name: filename,
+          type: type,
+        });
+
+        // Hacer request con FormData
+        const { apiConfig } = require('../config/api');
+        const url = `${apiConfig.baseURL}/usuarios`;
+        
+        response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const contentType = response.headers.get('content-type');
+        let data;
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const textData = await response.text();
+          data = textData ? { message: textData } : {};
+        }
+
+        if (!response.ok) {
+          const errorMessage = data.message || data.error || `Error ${response.status}: ${response.statusText}`;
+          throw new Error(errorMessage);
+        }
+
+        return data;
+      } else {
+        // Sin imagen, usar JSON normal
+        response = await apiRequest('/usuarios', {
+          method: 'POST',
+          body: userData,
+        });
+
+        if (response.success) {
+          return response;
+        } else {
+          throw new Error(response.message || 'Error al crear la cuenta');
+        }
+      }
+    } catch (error) {
+      const errorMessage = error.message || 'Error al conectar con el servidor';
+      throw new Error(errorMessage);
+    }
+  },
 };
 
 export default authService;

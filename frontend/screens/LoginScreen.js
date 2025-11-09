@@ -42,7 +42,7 @@ const LoginScreen = ({ navigation }) => {
 
   //navega a pantalla de registro
   const handleSignUp = () => {
-    Alert.alert('Registro', 'Pantalla de registro próximamente');
+    navigation.navigate('Register');
   };
 
   //recuperar contraseña

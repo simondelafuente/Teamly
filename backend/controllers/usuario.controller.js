@@ -61,13 +61,66 @@ exports.getByEmail = async (req, res, next) => {
 // Crear un nuevo usuario
 exports.create = async (req, res, next) => {
   try {
-    const usuario = await Usuario.create(req.body);
+    // Validar campos requeridos
+    if (!req.body.nombre_completo || !req.body.email || !req.body.contrasena) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nombre completo, email y contraseña son requeridos'
+      });
+    }
+
+    if (!req.body.pregunta_seguridad || !req.body.respuesta_seguridad) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pregunta y respuesta de seguridad son requeridas'
+      });
+    }
+
+    // Verificar si el email ya existe
+    const existingUser = await Usuario.findByEmail(req.body.email);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'El email ya está registrado'
+      });
+    }
+
+    // Preparar datos del usuario
+    const userData = {
+      nombre_completo: req.body.nombre_completo.trim(),
+      email: req.body.email.trim().toLowerCase(),
+      contrasena: req.body.contrasena,
+      pregunta_seguridad: req.body.pregunta_seguridad.trim(),
+      respuesta_seguridad: req.body.respuesta_seguridad.trim(),
+      foto_perfil: null,
+      fcm_token: req.body.fcm_token || null,
+    };
+
+    // Si hay un archivo subido, guardar la ruta
+    if (req.file) {
+      // Guardar la ruta relativa o URL del archivo
+      // En producción, deberías subir esto a un servicio de almacenamiento (S3, Cloudinary, etc.)
+      userData.foto_perfil = `/uploads/${req.file.filename}`;
+    } else if (req.body.foto_perfil) {
+      // Si viene como string (URL o path), usarlo directamente
+      userData.foto_perfil = req.body.foto_perfil;
+    }
+
+    const usuario = await Usuario.create(userData);
     res.status(201).json({
       success: true,
       message: 'Usuario creado correctamente',
       data: usuario
     });
   } catch (error) {
+    console.error('Error en create usuario:', error);
+    // Si es un error de base de datos, dar un mensaje más específico
+    if (error.message && error.message.includes('duplicate key')) {
+      return res.status(400).json({
+        success: false,
+        message: 'El email ya está registrado'
+      });
+    }
     next(error);
   }
 };

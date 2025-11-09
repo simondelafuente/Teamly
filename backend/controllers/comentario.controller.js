@@ -66,6 +66,27 @@ exports.getByUsuario = async (req, res, next) => {
   }
 };
 
+// Verificar si ya existe un comentario entre dos usuarios
+exports.checkByUsuarios = async (req, res, next) => {
+  try {
+    const { idUsuario, idUsuarioComentado } = req.query;
+    if (!idUsuario || !idUsuarioComentado) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requieren idUsuario e idUsuarioComentado'
+      });
+    }
+    const comentario = await Comentario.findByUsuarios(idUsuario, idUsuarioComentado);
+    res.json({
+      success: true,
+      exists: comentario !== null,
+      data: comentario
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Crear un nuevo comentario
 exports.create = async (req, res, next) => {
   try {

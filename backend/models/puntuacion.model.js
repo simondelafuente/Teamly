@@ -77,23 +77,32 @@ class Puntuacion {
 
   // Verificar si ya existe una puntuación entre dos usuarios
   static async findByUsuarios(idUsuario, idUsuarioPuntuado) {
+    let client;
     try {
-      const result = await pool.query(
+      client = await pool.connect();
+      const result = await client.query(
         `SELECT * FROM ${this.tableName} 
          WHERE id_usuario = $1 AND id_usuario_puntuado = $2`,
         [idUsuario, idUsuarioPuntuado]
       );
       return result.rows[0] || null;
     } catch (error) {
+      console.error('Error al verificar puntuación:', error);
       throw new Error(`Error al verificar puntuación: ${error.message}`);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
   }
 
   // Crear una nueva puntuación
   static async create(data) {
+    let client;
     try {
+      client = await pool.connect();
       const { id_usuario, id_usuario_puntuado, puntuacion } = data;
-      const result = await pool.query(
+      const result = await client.query(
         `INSERT INTO ${this.tableName} (id_usuario, id_usuario_puntuado, puntuacion) 
          VALUES ($1, $2, $3) 
          RETURNING *`,
@@ -101,29 +110,41 @@ class Puntuacion {
       );
       return result.rows[0];
     } catch (error) {
+      console.error('Error al crear puntuación:', error);
       throw new Error(`Error al crear puntuación: ${error.message}`);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
   }
 
   // Actualizar una puntuación
   static async update(id, data) {
+    let client;
     try {
+      client = await pool.connect();
       const { puntuacion } = data;
       
       if (puntuacion === undefined) {
         return await this.findById(id);
       }
 
-      const result = await pool.query(
+      const result = await client.query(
         `UPDATE ${this.tableName} 
-         SET puntuacion = $1 
+         SET puntuacion = $1
          WHERE id_puntuacion = $2 
          RETURNING *`,
         [puntuacion, id]
       );
       return result.rows[0] || null;
     } catch (error) {
+      console.error('Error al actualizar puntuación:', error);
       throw new Error(`Error al actualizar puntuación: ${error.message}`);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
   }
 

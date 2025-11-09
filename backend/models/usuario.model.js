@@ -47,18 +47,29 @@ class Usuario {
 
   // Crear un nuevo usuario
   static async create(data) {
+    const client = await pool.connect();
     try {
       const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token } = data;
-      const result = await pool.query(
+      
+      // Validar que los campos requeridos no sean null
+      if (!nombre_completo || !email || !contrasena || !pregunta_seguridad || !respuesta_seguridad) {
+        throw new Error('Todos los campos requeridos deben estar presentes');
+      }
+
+      const result = await client.query(
         `INSERT INTO ${this.tableName} 
          (nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token) 
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
          RETURNING id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, fcm_token, created_at, updated_at`,
-        [nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token]
+        [nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil || null, fcm_token || null]
       );
       return result.rows[0];
     } catch (error) {
+      // Log del error completo para debugging
+      console.error('Error en Usuario.create:', error);
       throw new Error(`Error al crear usuario: ${error.message}`);
+    } finally {
+      client.release();
     }
   }
 

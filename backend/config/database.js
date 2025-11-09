@@ -5,9 +5,13 @@ const { Pool } = require('pg');
 const pool = new Pool({
   connectionString: process.env.SUPABASE_DB_URL,
   ssl: { rejectUnauthorized: false }, // Supabase requiere SSL
-  max: 20, // Máximo número de clientes en el pool
-  idleTimeoutMillis: 30000, // Cerrar conexiones inactivas después de 30 segundos
-  connectionTimeoutMillis: 30000, // Timeout de conexión de 30 segundos
+  max: 5, // Reducir el máximo para evitar problemas con Supabase
+  min: 0, // No mantener conexiones mínimas (Supabase las cierra)
+  idleTimeoutMillis: 10000, // Cerrar conexiones inactivas después de 10 segundos
+  connectionTimeoutMillis: 10000, // Timeout de conexión de 10 segundos
+  allowExitOnIdle: false, // No permitir que el proceso termine cuando el pool está idle
+  // Configuraciones adicionales para Supabase
+  statement_timeout: 30000, // 30 segundos timeout para queries
 });
 
 // Función para probar la conexión
@@ -26,7 +30,8 @@ const connectDB = async () => {
 // Evento de error en el pool
 pool.on('error', (err) => {
   console.error('Error inesperado en el pool de conexiones:', err);
-  process.exit(-1);
+  // No cerrar el proceso, solo loguear el error
+  // El pool se recuperará automáticamente
 });
 
 module.exports = {

@@ -80,11 +80,34 @@ class Comentario {
     }
   }
 
+  // Verificar si ya existe un comentario entre dos usuarios
+  static async findByUsuarios(idUsuario, idUsuarioComentado) {
+    let client;
+    try {
+      client = await pool.connect();
+      const result = await client.query(
+        `SELECT * FROM ${this.tableName} 
+         WHERE id_usuario = $1 AND id_usuario_comentado = $2`,
+        [idUsuario, idUsuarioComentado]
+      );
+      return result.rows[0] || null;
+    } catch (error) {
+      console.error('Error al verificar comentario:', error);
+      throw new Error(`Error al verificar comentario: ${error.message}`);
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
+  }
+
   // Crear un nuevo comentario
   static async create(data) {
+    let client;
     try {
+      client = await pool.connect();
       const { contenido, id_usuario, id_usuario_comentado } = data;
-      const result = await pool.query(
+      const result = await client.query(
         `INSERT INTO ${this.tableName} (contenido, id_usuario, id_usuario_comentado) 
          VALUES ($1, $2, $3) 
          RETURNING *`,
@@ -92,29 +115,41 @@ class Comentario {
       );
       return result.rows[0];
     } catch (error) {
+      console.error('Error al crear comentario:', error);
       throw new Error(`Error al crear comentario: ${error.message}`);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
   }
 
   // Actualizar un comentario
   static async update(id, data) {
+    let client;
     try {
+      client = await pool.connect();
       const { contenido } = data;
       
       if (contenido === undefined) {
         return await this.findById(id);
       }
 
-      const result = await pool.query(
+      const result = await client.query(
         `UPDATE ${this.tableName} 
-         SET contenido = $1 
+         SET contenido = $1
          WHERE id_comentario = $2 
          RETURNING *`,
         [contenido, id]
       );
       return result.rows[0] || null;
     } catch (error) {
+      console.error('Error al actualizar comentario:', error);
       throw new Error(`Error al actualizar comentario: ${error.message}`);
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
   }
 

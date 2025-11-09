@@ -83,15 +83,43 @@ class Publicacion {
   // Crear una nueva publicación
   static async create(data) {
     try {
-      const { titulo, direccion, fecha, hora, id_usuario, id_actividad } = data;
+      const { titulo, direccion, zona, vacantes_disponibles, fecha, hora, id_usuario, id_actividad } = data;
+      // Intentar insertar con zona y vacantes_disponibles
       const result = await pool.query(
-        `INSERT INTO ${this.tableName} (titulo, direccion, fecha, hora, id_usuario, id_actividad) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
+        `INSERT INTO ${this.tableName} (titulo, direccion, zona, vacantes_disponibles, fecha, hora, id_usuario, id_actividad) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
          RETURNING *`,
-        [titulo, direccion, fecha, hora, id_usuario, id_actividad]
+        [titulo, direccion, zona || null, vacantes_disponibles || null, fecha, hora, id_usuario, id_actividad]
       );
       return result.rows[0];
     } catch (error) {
+      // Si alguna columna no existe, intentar sin ella
+      if (error.message.includes('zona') || error.message.includes('vacantes_disponibles')) {
+        try {
+          // Intentar con zona pero sin vacantes
+          if (!error.message.includes('zona')) {
+            const { titulo, direccion, zona, fecha, hora, id_usuario, id_actividad } = data;
+            const result = await pool.query(
+              `INSERT INTO ${this.tableName} (titulo, direccion, zona, fecha, hora, id_usuario, id_actividad) 
+               VALUES ($1, $2, $3, $4, $5, $6, $7) 
+               RETURNING *`,
+              [titulo, direccion, zona || null, fecha, hora, id_usuario, id_actividad]
+            );
+            return result.rows[0];
+          }
+          // Intentar sin zona ni vacantes
+          const { titulo, direccion, fecha, hora, id_usuario, id_actividad } = data;
+          const result = await pool.query(
+            `INSERT INTO ${this.tableName} (titulo, direccion, fecha, hora, id_usuario, id_actividad) 
+             VALUES ($1, $2, $3, $4, $5, $6) 
+             RETURNING *`,
+            [titulo, direccion, fecha, hora, id_usuario, id_actividad]
+          );
+          return result.rows[0];
+        } catch (innerError) {
+          throw new Error(`Error al crear publicación: ${innerError.message}`);
+        }
+      }
       throw new Error(`Error al crear publicación: ${error.message}`);
     }
   }
