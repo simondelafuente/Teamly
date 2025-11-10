@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
+import { getImageWithFallback } from '../utils/imageHelper';
 
 // Función para formatear la fecha a formato 'yyyy-MM-dd'
 function formatDate(date) {
@@ -37,6 +38,19 @@ function formatDateDisplay(dateString) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+// Función para formatear la hora (solo horas y minutos, sin segundos)
+function formatTime(timeString) {
+  if (!timeString) return '';
+  // Si viene en formato HH:MM:SS, solo tomar HH:MM
+  if (timeString.includes(':')) {
+    const parts = timeString.split(':');
+    const hours = parts[0].padStart(2, '0');
+    const minutes = parts[1].padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+  return timeString;
 }
 
 // Función para ajustar la fecha, evitando el cambio de día
@@ -117,6 +131,18 @@ const PublicationsScreen = ({ navigation }) => {
       setLoading(true);
       const response = await apiRequest('/publicaciones');
       if (response.success && Array.isArray(response.data)) {
+        // Log para debugging (solo en desarrollo)
+        if (__DEV__ && response.data.length > 0) {
+          console.log('📋 Publicaciones cargadas:', response.data.length);
+          console.log('🖼️ Ejemplo de publicación con imagen:', {
+            titulo: response.data[0].titulo,
+            actividad_imagen: response.data[0].actividad_imagen,
+            nombre_actividad: response.data[0].nombre_actividad,
+            actividad_tipo: response.data[0].actividad_tipo
+          });
+          // Log de todas las claves disponibles
+          console.log('🔑 Claves disponibles en publicación:', Object.keys(response.data[0]));
+        }
         setPublicaciones(response.data);
       } else {
         console.error('La respuesta no contiene un arreglo de publicaciones:', response);
@@ -555,19 +581,38 @@ const PublicationsScreen = ({ navigation }) => {
               }}
             >
               <View style={styles.card}>
+                {/* Badge de tipo de actividad en la esquina superior derecha */}
+                {publicacion.actividad_tipo ? (
+                  <View style={styles.activityTypeBadge}>
+                    <Text style={styles.activityTypeText}>
+                      {publicacion.actividad_tipo}
+                    </Text>
+                  </View>
+                ) : (
+                  // Badge temporal para debug (solo en desarrollo)
+                  __DEV__ && (
+                    <View style={[styles.activityTypeBadge, { backgroundColor: '#FF0000' }]}>
+                      <Text style={styles.activityTypeText}>NO TIPO</Text>
+                    </View>
+                  )
+                )}
+                
                 <Image
                   source={{
-                    uri:
-                      publicacion.actividad_imagen ||
-                      publicacion.usuario_foto ||
-                      'https://via.placeholder.com/75',
+                    uri: getImageWithFallback(
+                      publicacion.actividad_imagen,
+                      publicacion.usuario_foto,
+                      'https://via.placeholder.com/75'
+                    ),
                   }}
                   style={styles.avatar}
                   defaultSource={require('../assets/images/logo.png')}
                 />
 
                 <View style={styles.cardContent}>
-                  <Text style={styles.userName}>{publicacion.titulo}</Text>
+                  <Text style={styles.userName} numberOfLines={2} ellipsizeMode="tail">
+                    {publicacion.titulo}
+                  </Text>
                   <Text style={styles.eventTitle}>
                     {publicacion.nombre_actividad || 'Sin actividad'}
                   </Text>
@@ -588,7 +633,7 @@ const PublicationsScreen = ({ navigation }) => {
                     {publicacion.hora && (
                       <View style={styles.infoRow}>
                         <Ionicons name="time-outline" size={16} color={COLORS.primaryBlue} />
-                        <Text style={styles.infoText}>{publicacion.hora}</Text>
+                        <Text style={styles.infoText}>{formatTime(publicacion.hora)}</Text>
                       </View>
                     )}
                     <View style={styles.infoRow}>
@@ -627,17 +672,13 @@ const PublicationsScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => {
-            Alert.alert('Mensajes', 'Funcionalidad próximamente');
-          }}
+          onPress={() => navigation.navigate('MessagesList')}
         >
           <Ionicons name="chatbubble" size={30} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => {
-            Alert.alert('Perfil', 'Funcionalidad próximamente');
-          }}
+          onPress={() => navigation.navigate('Profile')}
         >
           <Ionicons name="person" size={30} color="#FFFFFF" />
         </TouchableOpacity>
@@ -893,6 +934,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    position: 'relative',
+  },
+  activityTypeBadge: {
+    position: 'absolute',
+    top: SIZES.padding / 2,
+    right: SIZES.padding / 2,
+    backgroundColor: COLORS.primaryBlue,
+    paddingHorizontal: SIZES.padding * 0.75,
+    paddingVertical: SIZES.padding / 4,
+    borderRadius: 10,
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  activityTypeText: {
+    color: '#FFFFFF',
+    fontSize: SIZES.small - 1,
+    fontWeight: '600',
   },
   avatar: {
     width: 75,
@@ -903,6 +965,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
+    paddingRight: 80, // Espacio para el badge del tipo de actividad
   },
   userName: {
     fontSize: SIZES.xlarge,

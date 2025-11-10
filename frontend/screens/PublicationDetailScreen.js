@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
+import { getImageWithFallback } from '../utils/imageHelper';
 
 // Función para formatear la fecha para mostrar
 function formatDateDisplay(dateString) {
@@ -149,9 +150,11 @@ const PublicationDetailScreen = ({ route, navigation }) => {
   }
 
   // Construir URL de imagen
-  const imageUri = publicacionData.actividad_imagen || 
-                   publicacionData.usuario_foto || 
-                   'https://via.placeholder.com/300';
+  const imageUri = getImageWithFallback(
+    publicacionData.actividad_imagen,
+    publicacionData.usuario_foto,
+    'https://via.placeholder.com/300'
+  );
 
   return (
     <View style={styles.container}>
@@ -299,17 +302,13 @@ const PublicationDetailScreen = ({ route, navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => {
-            Alert.alert('Mensajes', 'Funcionalidad próximamente');
-          }}
+          onPress={() => navigation.navigate('MessagesList')}
         >
           <Ionicons name="chatbubble" size={30} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => {
-            Alert.alert('Perfil', 'Funcionalidad próximamente');
-          }}
+          onPress={() => navigation.navigate('Profile')}
         >
           <Ionicons name="person" size={30} color="#FFFFFF" />
         </TouchableOpacity>

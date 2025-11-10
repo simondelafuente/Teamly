@@ -37,12 +37,34 @@ export const authService = {
   // Logout
   logout: async () => {
     try {
-      await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
-      await AsyncStorage.removeItem(USER_DATA_KEY);
-      return true;
+      // Intentar eliminar ambos items, incluso si uno falla
+      try {
+        await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+      } catch (e) {
+        console.warn('Error al eliminar token:', e);
+      }
+      
+      try {
+        await AsyncStorage.removeItem(USER_DATA_KEY);
+      } catch (e) {
+        console.warn('Error al eliminar datos de usuario:', e);
+      }
+      
+      // Verificar que se eliminaron correctamente
+      const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      const userData = await AsyncStorage.getItem(USER_DATA_KEY);
+      
+      if (token === null && userData === null) {
+        console.log('✅ Sesión cerrada correctamente');
+        return true;
+      } else {
+        console.warn('⚠️ Algunos datos no se eliminaron correctamente');
+        return true; // Devolver true de todas formas para permitir la navegación
+      }
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      return false;
+      // Devolver true de todas formas para permitir la navegación
+      return true;
     }
   },
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,11 +17,12 @@ import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
 
 const MessagesScreen = ({ route, navigation }) => {
-  const { userId, userName } = route.params || {};
+  const { userId, userName, initialMessage } = route.params || {};
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const scrollViewRef = useRef(null);
 
   useEffect(() => {
     if (userId) {
@@ -36,8 +37,32 @@ const MessagesScreen = ({ route, navigation }) => {
     try {
       setLoading(true);
       // TODO: Implementar endpoint de mensajes con el usuario
-      // Por ahora, mostrar mensaje de funcionalidad próximamente
-      setMessages([]);
+      // Por ahora, si hay un mensaje inicial, mostrarlo como recibido
+      const initialMessages = [];
+      
+      if (initialMessage) {
+        // Formatear la fecha del mensaje inicial
+        const messageDate = initialMessage.fecha 
+          ? formatMessageDateFromString(initialMessage.fecha)
+          : formatMessageDate();
+        
+        initialMessages.push({
+          id: `received_${Date.now()}`,
+          texto: initialMessage.texto,
+          fecha: messageDate,
+          isSent: false, // Es un mensaje recibido
+          isPending: false,
+        });
+      }
+      
+      setMessages(initialMessages);
+      
+      // Desplazar al final cuando se carga el mensaje inicial
+      if (initialMessages.length > 0) {
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
       Alert.alert('Error', 'No se pudieron cargar los mensajes');
@@ -46,20 +71,76 @@ const MessagesScreen = ({ route, navigation }) => {
     }
   };
 
+  // Función para formatear la fecha desde un string ISO
+  const formatMessageDateFromString = (dateString) => {
+    if (!dateString) return formatMessageDate();
+    try {
+      const date = new Date(dateString);
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      return formatMessageDate();
+    }
+  };
+
+  // Función para formatear la fecha y hora
+  const formatMessageDate = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   const enviarMensaje = async () => {
     if (!newMessage.trim()) {
       return;
     }
 
+    const messageText = newMessage.trim();
+    
+    // Crear mensaje temporal para mostrar inmediatamente
+    const tempMessage = {
+      id: `temp_${Date.now()}`,
+      texto: messageText,
+      fecha: formatMessageDate(),
+      isSent: true,
+      isPending: true, // Marcar como pendiente para la demo
+    };
+
     try {
       setSending(true);
-      // TODO: Implementar envío de mensaje
-      Alert.alert('Mensaje', 'Funcionalidad de envío de mensajes próximamente');
+      
+      // Agregar el mensaje inmediatamente a la lista (optimistic update)
+      setMessages(prevMessages => [...prevMessages, tempMessage]);
       setNewMessage('');
+      
+      // Desplazar el scroll al final para ver el nuevo mensaje
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+
+      // Simular envío (para la demo)
+      // En producción, aquí harías la llamada al API
+      setTimeout(() => {
+        // Marcar el mensaje como enviado (ya no pendiente)
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === tempMessage.id
+              ? { ...msg, isPending: false }
+              : msg
+          )
+        );
+        setSending(false);
+      }, 500);
+      
     } catch (error) {
       console.error('Error sending message:', error);
+      // Si hay error, remover el mensaje temporal
+      setMessages(prevMessages =>
+        prevMessages.filter(msg => msg.id !== tempMessage.id)
+      );
       Alert.alert('Error', 'No se pudo enviar el mensaje');
-    } finally {
       setSending(false);
     }
   };
@@ -87,8 +168,10 @@ const MessagesScreen = ({ route, navigation }) => {
       </View>
 
       <ScrollView 
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -106,16 +189,36 @@ const MessagesScreen = ({ route, navigation }) => {
             </Text>
           </View>
         ) : (
-          messages.map((message, index) => (
+          messages.map((message) => (
             <View 
-              key={index} 
+              key={message.id || `msg_${message.fecha}_${message.texto}`} 
               style={[
                 styles.messageCard,
                 message.isSent ? styles.messageSent : styles.messageReceived
               ]}
             >
-              <Text style={styles.messageText}>{message.texto}</Text>
-              <Text style={styles.messageDate}>{message.fecha}</Text>
+              <Text style={[
+                styles.messageText,
+                message.isSent && styles.messageTextSent
+              ]}>
+                {message.texto}
+              </Text>
+              <View style={styles.messageFooter}>
+                <Text style={[
+                  styles.messageDate,
+                  message.isSent && styles.messageDateSent
+                ]}>
+                  {message.fecha}
+                </Text>
+                {message.isPending && (
+                  <Ionicons 
+                    name="time-outline" 
+                    size={12} 
+                    color={message.isSent ? 'rgba(255,255,255,0.7)' : COLORS.textSecondary}
+                    style={styles.pendingIcon}
+                  />
+                )}
+              </View>
             </View>
           ))
         )}
@@ -232,9 +335,22 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     marginBottom: SIZES.margin / 2,
   },
+  messageTextSent: {
+    color: '#FFFFFF',
+  },
+  messageFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   messageDate: {
     fontSize: SIZES.small,
     color: COLORS.textSecondary,
+  },
+  messageDateSent: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  pendingIcon: {
+    marginLeft: 4,
   },
   inputContainer: {
     flexDirection: 'row',

@@ -89,14 +89,34 @@ const WebTimeInput = ({ value, onChange, style }) => {
   });
 };
 
-const CreatePublicationScreen = ({ navigation }) => {
-  const [titulo, setTitulo] = useState('');
-  const [actividadSeleccionada, setActividadSeleccionada] = useState(null);
-  const [direccion, setDireccion] = useState('');
-  const [zona, setZona] = useState('');
-  const [vacantes, setVacantes] = useState('');
-  const [fecha, setFecha] = useState(null);
-  const [hora, setHora] = useState(null);
+const CreatePublicationScreen = ({ navigation, route }) => {
+  const { mode, publication } = route.params || {};
+  const isEditMode = mode === 'edit' && publication;
+  const [publicationId, setPublicationId] = useState(isEditMode ? publication.id_publicacion : null);
+  const [titulo, setTitulo] = useState(isEditMode ? publication.titulo || '' : '');
+  const [actividadSeleccionada, setActividadSeleccionada] = useState(
+    isEditMode && publication.id_actividad 
+      ? { id_actividad: publication.id_actividad, nombre_actividad: publication.nombre_actividad }
+      : null
+  );
+  const [direccion, setDireccion] = useState(isEditMode ? publication.direccion || '' : '');
+  const [zona, setZona] = useState(isEditMode ? publication.zona || '' : '');
+  const [vacantes, setVacantes] = useState(isEditMode ? String(publication.vacantes_disponibles || '') : '');
+  const [fecha, setFecha] = useState(
+    isEditMode && publication.fecha 
+      ? adjustDate(new Date(publication.fecha))
+      : null
+  );
+  const [hora, setHora] = useState(
+    isEditMode && publication.hora
+      ? (() => {
+          const timeParts = publication.hora.split(':');
+          const date = new Date();
+          date.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+          return date;
+        })()
+      : null
+  );
   const [actividades, setActividades] = useState([]);
   const [showActividadDropdown, setShowActividadDropdown] = useState(false);
   const [showZonaDropdown, setShowZonaDropdown] = useState(false);
@@ -126,6 +146,16 @@ const CreatePublicationScreen = ({ navigation }) => {
     cargarActividades();
     cargarUsuario();
   }, []);
+
+  // Cargar actividad seleccionada cuando las actividades estén disponibles en modo edición
+  useEffect(() => {
+    if (isEditMode && actividades.length > 0 && publication.id_actividad && !actividadSeleccionada) {
+      const actividad = actividades.find(a => a.id_actividad === publication.id_actividad);
+      if (actividad) {
+        setActividadSeleccionada(actividad);
+      }
+    }
+  }, [actividades, isEditMode]);
 
   const cargarUsuario = async () => {
     try {
@@ -172,14 +202,7 @@ const CreatePublicationScreen = ({ navigation }) => {
       Alert.alert('Error', 'Por favor selecciona una actividad');
       return false;
     }
-    if (!direccion.trim()) {
-      Alert.alert('Error', 'Por favor ingresa una dirección');
-      return false;
-    }
-    if (!zona) {
-      Alert.alert('Error', 'Por favor selecciona una zona');
-      return false;
-    }
+    // Dirección y zona son opcionales, no se validan
     if (!vacantes || isNaN(parseInt(vacantes)) || parseInt(vacantes) <= 0) {
       Alert.alert('Error', 'Por favor ingresa un número válido de vacantes disponibles');
       return false;
@@ -199,16 +222,16 @@ const CreatePublicationScreen = ({ navigation }) => {
     return true;
   };
 
-  // Crear publicación
-  const crearPublicacion = async () => {
+  // Crear o actualizar publicación
+  const guardarPublicacion = async () => {
     if (!validarFormulario()) return;
 
     setLoading(true);
     try {
       const publicacionData = {
         titulo: titulo.trim(),
-        direccion: direccion.trim(),
-        zona: zona,
+        direccion: direccion.trim() || null,
+        zona: zona || null,
         vacantes_disponibles: parseInt(vacantes),
         fecha: formatDate(fecha),
         hora: formatTime(hora),
@@ -216,29 +239,50 @@ const CreatePublicationScreen = ({ navigation }) => {
         id_actividad: actividadSeleccionada.id_actividad,
       };
 
-      const response = await apiRequest('/publicaciones', {
-        method: 'POST',
-        body: publicacionData,
-      });
+      let response;
+      if (isEditMode && publicationId) {
+        // Actualizar publicación existente
+        response = await apiRequest(`/publicaciones/${publicationId}`, {
+          method: 'PUT',
+          body: publicacionData,
+        });
+      } else {
+        // Crear nueva publicación
+        response = await apiRequest('/publicaciones', {
+          method: 'POST',
+          body: publicacionData,
+        });
+      }
 
       if (response.success) {
-        // Limpiar formulario
-        setTitulo('');
-        setActividadSeleccionada(null);
-        setDireccion('');
-        setZona('');
-        setVacantes('');
-        setFecha(null);
-        setHora(null);
+        // Limpiar formulario solo si no es edición
+        if (!isEditMode) {
+          setTitulo('');
+          setActividadSeleccionada(null);
+          setDireccion('');
+          setZona('');
+          setVacantes('');
+          setFecha(null);
+          setHora(null);
+        }
         
         // Mostrar mensaje de éxito y navegar automáticamente
         Alert.alert(
-          '¡Publicación Creada!',
-          'Tu publicación ha sido creada exitosamente y ya está visible para todos.',
+          isEditMode ? '¡Publicación Actualizada!' : '¡Publicación Creada!',
+          isEditMode 
+            ? 'Tu publicación ha sido actualizada exitosamente.'
+            : 'Tu publicación ha sido creada exitosamente y ya está visible para todos.',
           [
             {
               text: 'OK',
-              onPress: () => navigation.navigate('Publications', { refresh: true }),
+              onPress: () => {
+                if (isEditMode) {
+                  // Navegar a Mis Publicaciones con el userId
+                  navigation.navigate('UserPublications', { userId: userId });
+                } else {
+                  navigation.navigate('Publications', { refresh: true });
+                }
+              },
             },
           ],
           { cancelable: false }
@@ -246,14 +290,18 @@ const CreatePublicationScreen = ({ navigation }) => {
         
         // Navegar automáticamente después de 1.5 segundos
         setTimeout(() => {
-          navigation.navigate('Publications', { refresh: true });
+          if (isEditMode) {
+            navigation.navigate('UserPublications', { userId: userId });
+          } else {
+            navigation.navigate('Publications', { refresh: true });
+          }
         }, 1500);
       } else {
-        throw new Error(response.message || 'Error al crear la publicación');
+        throw new Error(response.message || (isEditMode ? 'Error al actualizar la publicación' : 'Error al crear la publicación'));
       }
     } catch (error) {
-      console.error('Error al crear publicación:', error);
-      Alert.alert('Error', error.message || 'Error al crear la publicación');
+      console.error(`Error al ${isEditMode ? 'actualizar' : 'crear'} publicación:`, error);
+      Alert.alert('Error', error.message || (isEditMode ? 'Error al actualizar la publicación' : 'Error al crear la publicación'));
     } finally {
       setLoading(false);
     }
@@ -271,7 +319,9 @@ const CreatePublicationScreen = ({ navigation }) => {
         >
           <Ionicons name="chevron-back" size={24} color={COLORS.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Create Publication</Text>
+        <Text style={styles.headerTitle}>
+          {isEditMode ? 'Editar Publicación' : 'Crear Publicación'}
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -282,7 +332,7 @@ const CreatePublicationScreen = ({ navigation }) => {
       >
         {/* Campo Título */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Title</Text>
+          <Text style={styles.label}>Título</Text>
           <TextInput
             style={styles.input}
             placeholder="Ingresa el título de la publicación"
@@ -295,7 +345,7 @@ const CreatePublicationScreen = ({ navigation }) => {
 
         {/* Campo Actividad - Dropdown con búsqueda */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Activity</Text>
+          <Text style={styles.label}>Actividad</Text>
           <TouchableOpacity
             style={styles.dropdown}
             onPress={() => {
@@ -375,10 +425,10 @@ const CreatePublicationScreen = ({ navigation }) => {
 
         {/* Campo Dirección */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Address</Text>
+          <Text style={styles.label}>Dirección (Opcional)</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ingresa la dirección del evento"
+            placeholder="Ingresa la dirección del evento (opcional)"
             placeholderTextColor={COLORS.textSecondary}
             value={direccion}
             onChangeText={setDireccion}
@@ -389,7 +439,7 @@ const CreatePublicationScreen = ({ navigation }) => {
 
         {/* Campo Zona - Dropdown con búsqueda */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Zone</Text>
+          <Text style={styles.label}>Zona (Opcional)</Text>
           <TouchableOpacity
             style={styles.dropdown}
             onPress={() => {
@@ -403,7 +453,7 @@ const CreatePublicationScreen = ({ navigation }) => {
                 !zona && styles.dropdownPlaceholder,
               ]}
             >
-              {zona || 'Selecciona una zona'}
+              {zona || 'Selecciona una zona (opcional)'}
             </Text>
             <Ionicons
               name={showZonaDropdown ? 'chevron-up' : 'chevron-down'}
@@ -429,6 +479,19 @@ const CreatePublicationScreen = ({ navigation }) => {
                 )}
               </View>
               <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                {/* Opción para limpiar zona */}
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  onPress={() => {
+                    setZona('');
+                    setShowZonaDropdown(false);
+                    setZonaSearch('');
+                  }}
+                >
+                  <Text style={[styles.dropdownItemText, { fontStyle: 'italic' }]}>
+                    Sin zona (opcional)
+                  </Text>
+                </TouchableOpacity>
                 {zonasFiltradas.map((zonaItem) => (
                   <TouchableOpacity
                     key={zonaItem}
@@ -466,7 +529,7 @@ const CreatePublicationScreen = ({ navigation }) => {
 
         {/* Campo Vacantes Disponibles */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Available Spots</Text>
+          <Text style={styles.label}>Vacantes Disponibles</Text>
           <TextInput
             style={styles.input}
             placeholder="Ej: 5"
@@ -491,7 +554,7 @@ const CreatePublicationScreen = ({ navigation }) => {
 
         {/* Campo Fecha */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Date</Text>
+          <Text style={styles.label}>Fecha</Text>
           {Platform.OS === 'web' ? (
             <View style={styles.dateInputContainer}>
               <Ionicons name="calendar-outline" size={20} color={COLORS.primaryBlue} />
@@ -546,7 +609,7 @@ const CreatePublicationScreen = ({ navigation }) => {
 
         {/* Campo Hora */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Schedule</Text>
+          <Text style={styles.label}>Hora</Text>
           {Platform.OS === 'web' ? (
             <View style={styles.dateInputContainer}>
               <Ionicons name="time-outline" size={20} color={COLORS.primaryBlue} />
@@ -610,14 +673,16 @@ const CreatePublicationScreen = ({ navigation }) => {
           )}
         </View>
 
-        {/* Botón Create */}
+        {/* Botón Crear */}
         <TouchableOpacity
           style={[styles.createButton, loading && styles.buttonDisabled]}
-          onPress={crearPublicacion}
+          onPress={guardarPublicacion}
           disabled={loading}
         >
           <Text style={styles.createButtonText}>
-            {loading ? 'Creando...' : 'Create'}
+            {loading 
+              ? (isEditMode ? 'Actualizando...' : 'Creando...') 
+              : (isEditMode ? 'Actualizar Publicación' : 'Crear Publicación')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -638,17 +703,13 @@ const CreatePublicationScreen = ({ navigation }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => {
-            Alert.alert('Mensajes', 'Funcionalidad próximamente');
-          }}
+          onPress={() => navigation.navigate('MessagesList')}
         >
           <Ionicons name="chatbubble" size={30} color="#FFFFFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.footerButton}
-          onPress={() => {
-            Alert.alert('Perfil', 'Funcionalidad próximamente');
-          }}
+          onPress={() => navigation.navigate('Profile')}
         >
           <Ionicons name="person" size={30} color="#FFFFFF" />
         </TouchableOpacity>

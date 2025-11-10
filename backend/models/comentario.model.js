@@ -135,16 +135,61 @@ class Comentario {
         return await this.findById(id);
       }
 
+      // Obtener el comentario actual antes de actualizar para comparar
+      const beforeUpdate = await this.findById(id);
+      console.log('📋 Comentario ANTES de actualizar:', {
+        id: beforeUpdate?.id_comentario,
+        created_at: beforeUpdate?.created_at,
+        updated_at: beforeUpdate?.updated_at
+      });
+      
+      // Actualizar el contenido y updated_at manualmente
+      // Esto asegura que updated_at se actualice incluso si el trigger no funciona
       const result = await client.query(
         `UPDATE ${this.tableName} 
-         SET contenido = $1
+         SET contenido = $1, updated_at = NOW()
          WHERE id_comentario = $2 
-         RETURNING *`,
+         RETURNING id_comentario, contenido, created_at, updated_at, id_usuario, id_usuario_comentado`,
         [contenido, id]
       );
-      return result.rows[0] || null;
+      
+      const updatedComment = result.rows[0] || null;
+      
+      // Log para debugging
+      if (updatedComment) {
+        console.log('✅ Comentario DESPUÉS de actualizar:', {
+          id: updatedComment.id_comentario,
+          contenido: updatedComment.contenido,
+          created_at: updatedComment.created_at,
+          updated_at: updatedComment.updated_at
+        });
+        
+        // Verificar que updated_at se actualizó (debe ser diferente al anterior)
+        if (beforeUpdate && beforeUpdate.updated_at) {
+          const beforeUpdatedAt = new Date(beforeUpdate.updated_at).getTime();
+          const afterUpdatedAt = new Date(updatedComment.updated_at).getTime();
+          const timeDifference = afterUpdatedAt - beforeUpdatedAt;
+          
+          if (timeDifference > 0) {
+            console.log('✅ updated_at se actualizó correctamente (diferencia:', timeDifference, 'ms)');
+          } else {
+            console.warn('⚠️ ADVERTENCIA: updated_at NO cambió después del UPDATE');
+          }
+        } else {
+          console.log('✅ updated_at se estableció por primera vez');
+        }
+      } else {
+        console.error('❌ No se encontró el comentario después del UPDATE');
+      }
+      
+      return updatedComment;
     } catch (error) {
-      console.error('Error al actualizar comentario:', error);
+      console.error('❌ Error al actualizar comentario:', error);
+      console.error('❌ Detalles del error:', {
+        message: error.message,
+        code: error.code,
+        detail: error.detail
+      });
       throw new Error(`Error al actualizar comentario: ${error.message}`);
     } finally {
       if (client) {

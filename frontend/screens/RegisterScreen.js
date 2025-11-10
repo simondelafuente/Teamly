@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SIZES } from '../utils/constants';
 import { authService } from '../services/auth';
+import { getImageWithFallback } from '../utils/imageHelper';
 
 // Opciones de pregunta de seguridad
 const SECURITY_QUESTIONS = [
@@ -25,25 +26,12 @@ const SECURITY_QUESTIONS = [
   '¿Cual es tu videojuego favorito?',
 ];
 
-// Avatares predeterminados (el usuario debe agregar estas imágenes)
-let defaultAvatar1, defaultAvatar2, defaultAvatar3;
-try {
-  defaultAvatar1 = require('../assets/images/avatar1.png');
-} catch (e) {
-  defaultAvatar1 = null;
-}
-try {
-  defaultAvatar2 = require('../assets/images/avatar2.png');
-} catch (e) {
-  defaultAvatar2 = null;
-}
-try {
-  defaultAvatar3 = require('../assets/images/avatar3.png');
-} catch (e) {
-  defaultAvatar3 = null;
-}
-
-const DEFAULT_AVATARS = [defaultAvatar1, defaultAvatar2, defaultAvatar3].filter(Boolean);
+// URLs de avatares en el servidor
+const getAvatarUrl = (avatarNumber) => {
+  const { apiConfig } = require('../config/api');
+  const baseUrl = apiConfig.baseURL.replace('/api', '');
+  return `${baseUrl}/uploads/avatars/avatar${avatarNumber}.jpg`;
+};
 
 const RegisterScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
@@ -122,12 +110,21 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   // Seleccionar avatar predeterminado
-  const selectDefaultAvatar = (index) => {
-    if (DEFAULT_AVATARS[index]) {
-      // Guardar el índice para identificar que es un avatar predeterminado
-      setSelectedImage(`default_${index}`);
-      setShowAvatarModal(false);
+  const selectAvatar = (avatarNumber) => {
+    // Guardar la ruta del avatar que estará en el servidor
+    if (avatarNumber === 1) {
+      setSelectedImage('/uploads/avatars/avatar1.jpg');
+    } else if (avatarNumber === 2) {
+      setSelectedImage('/uploads/avatars/avatar2.jpg');
+    } else if (avatarNumber === 3) {
+      setSelectedImage('/uploads/avatars/avatar3.jpg');
     }
+    setShowAvatarModal(false);
+  };
+
+  // Mostrar modal de selección de foto
+  const showImageOptions = () => {
+    setShowAvatarModal(true);
   };
 
   // Validar formulario
@@ -186,12 +183,11 @@ const RegisterScreen = ({ navigation }) => {
       // Determinar si hay imagen para subir o es un avatar predeterminado
       let imageUri = null;
       if (selectedImage && typeof selectedImage === 'string') {
-        if (selectedImage.startsWith('default_')) {
-          // Es un avatar predeterminado, no subir archivo
-          const index = parseInt(selectedImage.split('_')[1]);
-          userData.foto_perfil = `default_avatar_${index}`;
+        if (selectedImage.startsWith('/uploads/avatars/')) {
+          // Es un avatar del servidor, usar la ruta directamente
+          userData.foto_perfil = selectedImage;
         } else if (selectedImage.startsWith('file://')) {
-          // Es una imagen seleccionada, subirla
+          // Es una imagen seleccionada del dispositivo, subirla
           imageUri = selectedImage;
         }
       }
@@ -253,10 +249,16 @@ const RegisterScreen = ({ navigation }) => {
           {selectedImage ? (
             <Image
               source={
-                typeof selectedImage === 'string' && selectedImage.startsWith('default_')
-                  ? DEFAULT_AVATARS[parseInt(selectedImage.split('_')[1])]
-                  : typeof selectedImage === 'string'
+                selectedImage && selectedImage.includes('avatar1')
+                  ? { uri: getAvatarUrl(1) }
+                  : selectedImage && selectedImage.includes('avatar2')
+                  ? { uri: getAvatarUrl(2) }
+                  : selectedImage && selectedImage.includes('avatar3')
+                  ? { uri: getAvatarUrl(3) }
+                  : typeof selectedImage === 'string' && selectedImage.startsWith('file://')
                   ? { uri: selectedImage }
+                  : typeof selectedImage === 'string'
+                  ? { uri: getImageWithFallback(selectedImage, null, 'https://via.placeholder.com/100') }
                   : selectedImage
               }
               style={styles.avatar}
@@ -440,50 +442,90 @@ const RegisterScreen = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Seleccionar Avatar</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Seleccionar Foto de Perfil</Text>
+              <TouchableOpacity
+                onPress={() => setShowAvatarModal(false)}
+                style={styles.closeButton}
+              >
+                <Ionicons name="close" size={24} color={COLORS.textDark} />
+              </TouchableOpacity>
+            </View>
 
-            {/* Opción: Galería */}
+            {/* Avatares disponibles */}
+            <View style={styles.avatarsContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.avatarOption,
+                  selectedImage && selectedImage.includes('avatar1') && styles.avatarSelected,
+                ]}
+                onPress={() => selectAvatar(1)}
+              >
+                <Image 
+                  source={{ uri: getAvatarUrl(1) }} 
+                  style={styles.avatarPreview}
+                  defaultSource={require('../assets/images/logo.png')}
+                />
+                <Text style={styles.avatarLabel}>Avatar 1</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.avatarOption,
+                  selectedImage && selectedImage.includes('avatar2') && styles.avatarSelected,
+                ]}
+                onPress={() => selectAvatar(2)}
+              >
+                <Image 
+                  source={{ uri: getAvatarUrl(2) }} 
+                  style={styles.avatarPreview}
+                  defaultSource={require('../assets/images/logo.png')}
+                />
+                <Text style={styles.avatarLabel}>Avatar 2</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.avatarOption,
+                  selectedImage && selectedImage.includes('avatar3') && styles.avatarSelected,
+                ]}
+                onPress={() => selectAvatar(3)}
+              >
+                <Image 
+                  source={{ uri: getAvatarUrl(3) }} 
+                  style={styles.avatarPreview}
+                  defaultSource={require('../assets/images/logo.png')}
+                />
+                <Text style={styles.avatarLabel}>Avatar 3</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Botón para cargar foto desde dispositivo */}
             <TouchableOpacity
-              style={styles.modalOption}
-              onPress={pickImage}
+              style={styles.loadPhotoButton}
+              onPress={() => {
+                setShowAvatarModal(false);
+                Alert.alert(
+                  'Cargar Foto',
+                  'Elige una opción',
+                  [
+                    {
+                      text: 'Cancelar',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Galería',
+                      onPress: pickImage,
+                    },
+                    {
+                      text: 'Cámara',
+                      onPress: takePhoto,
+                    },
+                  ],
+                  { cancelable: true }
+                );
+              }}
             >
-              <Ionicons name="images" size={24} color={COLORS.primaryBlue} />
-              <Text style={styles.modalOptionText}>Galería</Text>
-            </TouchableOpacity>
-
-            {/* Opción: Cámara */}
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={takePhoto}
-            >
-              <Ionicons name="camera" size={24} color={COLORS.primaryBlue} />
-              <Text style={styles.modalOptionText}>Cámara</Text>
-            </TouchableOpacity>
-
-            {/* Avatares predeterminados */}
-            {DEFAULT_AVATARS.length > 0 && (
-              <>
-                <Text style={styles.modalSectionTitle}>Avatares predeterminados</Text>
-                <View style={styles.defaultAvatarsContainer}>
-                  {DEFAULT_AVATARS.map((avatar, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.defaultAvatarOption}
-                      onPress={() => selectDefaultAvatar(index)}
-                    >
-                      <Image source={avatar} style={styles.defaultAvatarImage} />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Botón cancelar */}
-            <TouchableOpacity
-              style={styles.modalCancelButton}
-              onPress={() => setShowAvatarModal(false)}
-            >
-              <Text style={styles.modalCancelText}>Cancelar</Text>
+              <Ionicons name="camera" size={20} color="#FFFFFF" />
+              <Text style={styles.loadPhotoButtonText}>Cargar Foto</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -660,61 +702,66 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: SIZES.padding * 2,
     paddingBottom: Platform.OS === 'ios' ? 40 : SIZES.padding * 2,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SIZES.margin * 2,
   },
   modalTitle: {
     fontSize: SIZES.xlarge,
     fontWeight: 'bold',
     color: COLORS.textDark,
-    marginBottom: SIZES.margin * 2,
-    textAlign: 'center',
   },
-  modalOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SIZES.padding,
-    paddingHorizontal: SIZES.padding,
-    marginBottom: SIZES.margin,
-    backgroundColor: COLORS.inputBackground,
-    borderRadius: 12,
+  closeButton: {
+    padding: SIZES.padding / 2,
   },
-  modalOptionText: {
-    fontSize: SIZES.medium,
-    color: COLORS.textDark,
-    marginLeft: SIZES.margin,
-  },
-  modalSectionTitle: {
-    fontSize: SIZES.medium,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
-    marginTop: SIZES.margin,
-    marginBottom: SIZES.margin,
-  },
-  defaultAvatarsContainer: {
+  avatarsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: SIZES.margin,
+    marginBottom: SIZES.margin * 2,
+    flexWrap: 'wrap',
+    gap: SIZES.margin,
   },
-  defaultAvatarOption: {
+  avatarOption: {
+    alignItems: 'center',
+    padding: SIZES.padding,
+    borderRadius: SIZES.borderRadius,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    minWidth: 100,
+  },
+  avatarSelected: {
+    borderColor: COLORS.primaryBlue,
+    backgroundColor: '#E8F4FD',
+  },
+  avatarPreview: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: COLORS.border,
+    marginBottom: SIZES.margin / 2,
   },
-  defaultAvatarImage: {
-    width: '100%',
-    height: '100%',
-  },
-  modalCancelButton: {
-    marginTop: SIZES.margin,
-    paddingVertical: SIZES.padding,
-    alignItems: 'center',
-  },
-  modalCancelText: {
+  avatarLabel: {
     fontSize: SIZES.medium,
-    color: COLORS.primaryBlue,
+    color: COLORS.textDark,
     fontWeight: '500',
+  },
+  loadPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primaryBlue,
+    borderRadius: SIZES.borderRadius,
+    padding: SIZES.padding,
+    gap: 8,
+    marginTop: SIZES.margin,
+  },
+  loadPhotoButtonText: {
+    color: '#FFFFFF',
+    fontSize: SIZES.large,
+    fontWeight: '600',
   },
 });
 

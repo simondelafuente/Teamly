@@ -8,6 +8,10 @@ import PublicationDetailScreen from './screens/PublicationDetailScreen';
 import UserCommentsScreen from './screens/UserCommentsScreen';
 import AddCommentScreen from './screens/AddCommentScreen';
 import MessagesScreen from './screens/MessagesScreen';
+import MessagesListScreen from './screens/MessagesListScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import UserPublicationsScreen from './screens/UserPublicationsScreen';
 import SplashScreen from './screens/SplashScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -108,6 +112,34 @@ export default function App() {
         <Stack.Screen 
           name="Messages" 
           component={MessagesScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="MessagesList" 
+          component={MessagesListScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="Profile" 
+          component={ProfileScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="EditProfile" 
+          component={EditProfileScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="UserPublications" 
+          component={UserPublicationsScreen}
           options={{ 
             headerShown: false,
           }}

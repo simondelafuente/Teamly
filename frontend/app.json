@@ -27,7 +27,7 @@
     ],
     "scheme": "teamly",
     "extra": {
-      "apiUrl": "http://192.168.0.67:3000/api"
+      "apiUrl": "http://192.168.0.4:3000/api"
     }
   }
 }

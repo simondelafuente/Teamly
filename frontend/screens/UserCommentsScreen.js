@@ -16,6 +16,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
+import { getImageWithFallback } from '../utils/imageHelper';
 
 // Componente para mostrar estrellas
 const StarRating = ({ rating, size = 20, showNumber = false }) => {
@@ -90,6 +91,15 @@ const UserCommentsScreen = ({ route, navigation }) => {
     try {
       const response = await apiRequest(`/comentarios/usuario/${userId}`);
       if (response.success && Array.isArray(response.data)) {
+        // Log para debugging
+        if (__DEV__ && response.data.length > 0) {
+          console.log('📋 Comentarios cargados:', response.data.length);
+          console.log('🔍 Ejemplo de comentario:', {
+            id: response.data[0].id_comentario,
+            contenido: response.data[0].contenido,
+            created_at: response.data[0].created_at
+          });
+        }
         setComments(response.data);
       }
     } catch (error) {
@@ -221,7 +231,11 @@ const UserCommentsScreen = ({ route, navigation }) => {
                     <View style={styles.commentHeader}>
                       <Image
                         source={{
-                          uri: comment.usuario_foto || 'https://via.placeholder.com/40',
+                          uri: getImageWithFallback(
+                            comment.usuario_foto,
+                            null,
+                            'https://via.placeholder.com/40'
+                          ),
                         }}
                         style={styles.userAvatar}
                         defaultSource={require('../assets/images/logo.png')}
@@ -237,7 +251,7 @@ const UserCommentsScreen = ({ route, navigation }) => {
                     </View>
                     <Text style={styles.commentText}>{comment.contenido}</Text>
                     <Text style={styles.commentDate}>
-                      {formatDate(comment.created_at)}
+                      {formatDate(comment.updated_at || comment.created_at)}
                     </Text>
                   </View>
                 );

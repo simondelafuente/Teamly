@@ -58,13 +58,18 @@ La URL de la API está en `frontend/app.json`:
 {
   "expo": {
     "extra": {
-      "apiUrl": "http://192.168.0.67:3000/api"
+      "apiUrl": "http://192.168.0.4:3000/api"
     }
   }
 }
 ```
 
-**Nota:** Actualiza la IP si cambia.
+**Nota:** 
+- Actualiza la IP si cambia (puedes obtenerla con `ipconfig` en Windows)
+- Si cambias la IP, **debes reiniciar Expo completamente** para que cargue la nueva configuración:
+  1. Detén el servidor de Expo (Ctrl+C)
+  2. Limpia el cache: `npx expo start -c`
+  3. O reinicia la app en tu dispositivo
 
 ## 📚 Scripts
 
