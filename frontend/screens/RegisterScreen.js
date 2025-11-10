@@ -20,9 +20,9 @@ import { authService } from '../services/auth';
 
 // Opciones de pregunta de seguridad
 const SECURITY_QUESTIONS = [
-  'Primer mascota',
-  'Colegio de niño',
-  'videojuego favorito',
+  '¿Cual es el nombre de tu primer mascota?',
+  '¿A cual colegio fuiste de niño?',
+  '¿Cual es tu videojuego favorito?',
 ];
 
 // Avatares predeterminados (el usuario debe agregar estas imágenes)

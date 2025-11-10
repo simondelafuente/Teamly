@@ -51,7 +51,6 @@ class Usuario {
     try {
       const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token } = data;
       
-      // Validar que los campos requeridos no sean null
       if (!nombre_completo || !email || !contrasena || !pregunta_seguridad || !respuesta_seguridad) {
         throw new Error('Todos los campos requeridos deben estar presentes');
       }
@@ -65,7 +64,6 @@ class Usuario {
       );
       return result.rows[0];
     } catch (error) {
-      // Log del error completo para debugging
       console.error('Error en Usuario.create:', error);
       throw new Error(`Error al crear usuario: ${error.message}`);
     } finally {
@@ -78,7 +76,6 @@ class Usuario {
     try {
       const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token } = data;
       
-      // Construir la consulta dinámicamente basada en los campos proporcionados
       const updates = [];
       const values = [];
       let paramCount = 1;

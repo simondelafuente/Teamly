@@ -24,7 +24,7 @@ export default function App() {
   useEffect(() => {
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 4000); //4 segundos
+    }, 5000);
 
     checkAuthStatus();
 
