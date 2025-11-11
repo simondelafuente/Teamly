@@ -357,6 +357,15 @@ const EditProfileScreen = ({ navigation, route }) => {
           />
         </View>
 
+        {/* Botón Recuperar Contraseña */}
+        <TouchableOpacity
+          style={styles.recoverPasswordButton}
+          onPress={() => navigation.navigate('RecoverPassword')}
+        >
+          <Ionicons name="lock-closed-outline" size={20} color={COLORS.primaryBlue} />
+          <Text style={styles.recoverPasswordText}>Recuperar Contraseña</Text>
+        </TouchableOpacity>
+
         {/* Botón Guardar */}
         <TouchableOpacity
           style={[styles.saveButton, loading && styles.buttonDisabled]}
@@ -568,6 +577,24 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  recoverPasswordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: SIZES.borderRadius,
+    padding: SIZES.padding,
+    marginTop: SIZES.margin,
+    marginBottom: SIZES.margin / 2,
+    borderWidth: 1,
+    borderColor: COLORS.primaryBlue,
+    gap: 8,
+  },
+  recoverPasswordText: {
+    color: COLORS.primaryBlue,
+    fontSize: SIZES.medium,
+    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: COLORS.primaryBlue,

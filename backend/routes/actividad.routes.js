@@ -4,6 +4,7 @@ const actividadController = require('../controllers/actividad.controller');
 
 // Rutas de actividades
 router.get('/', actividadController.getAll);
+router.get('/tipo/:tipo', actividadController.getByTipo);
 router.get('/:id', actividadController.getById);
 router.post('/', actividadController.create);
 router.put('/:id', actividadController.update);

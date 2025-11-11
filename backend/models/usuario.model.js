@@ -7,7 +7,7 @@ class Usuario {
   static async findAll() {
     try {
       const result = await pool.query(
-        `SELECT id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, fcm_token, created_at, updated_at 
+        `SELECT id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, created_at, updated_at 
          FROM ${this.tableName} 
          ORDER BY created_at DESC`
       );
@@ -21,7 +21,7 @@ class Usuario {
   static async findById(id) {
     try {
       const result = await pool.query(
-        `SELECT id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, fcm_token, created_at, updated_at 
+        `SELECT id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, created_at, updated_at 
          FROM ${this.tableName} 
          WHERE id_usuario = $1`,
         [id]
@@ -49,7 +49,7 @@ class Usuario {
   static async create(data) {
     const client = await pool.connect();
     try {
-      const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token } = data;
+      const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil } = data;
       
       if (!nombre_completo || !email || !contrasena || !pregunta_seguridad || !respuesta_seguridad) {
         throw new Error('Todos los campos requeridos deben estar presentes');
@@ -57,10 +57,10 @@ class Usuario {
 
       const result = await client.query(
         `INSERT INTO ${this.tableName} 
-         (nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) 
-         RETURNING id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, fcm_token, created_at, updated_at`,
-        [nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil || null, fcm_token || null]
+         (nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil) 
+         VALUES ($1, $2, $3, $4, $5, $6) 
+         RETURNING id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, created_at, updated_at`,
+        [nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil || null]
       );
       return result.rows[0];
     } catch (error) {
@@ -74,7 +74,7 @@ class Usuario {
   // Actualizar un usuario
   static async update(id, data) {
     try {
-      const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil, fcm_token } = data;
+      const { nombre_completo, email, contrasena, pregunta_seguridad, respuesta_seguridad, foto_perfil } = data;
       
       const updates = [];
       const values = [];
@@ -104,10 +104,6 @@ class Usuario {
         updates.push(`foto_perfil = $${paramCount++}`);
         values.push(foto_perfil);
       }
-      if (fcm_token !== undefined) {
-        updates.push(`fcm_token = $${paramCount++}`);
-        values.push(fcm_token);
-      }
 
       if (updates.length === 0) {
         return await this.findById(id);
@@ -120,7 +116,7 @@ class Usuario {
         `UPDATE ${this.tableName} 
          SET ${updates.join(', ')} 
          WHERE id_usuario = $${paramCount} 
-         RETURNING id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, fcm_token, created_at, updated_at`,
+         RETURNING id_usuario, nombre_completo, email, pregunta_seguridad, foto_perfil, created_at, updated_at`,
         values
       );
       return result.rows[0] || null;

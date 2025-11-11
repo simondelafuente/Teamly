@@ -106,12 +106,10 @@ const UserPublicationsScreen = ({ route, navigation }) => {
           {
             text: 'Cancelar',
             style: 'cancel',
-            onPress: () => console.log('Usuario canceló'),
           },
           {
             text: 'Eliminar',
             onPress: () => {
-              console.log('Usuario eligió eliminar, procediendo...');
               ejecutarEliminacion(publicacionId);
             },
             style: 'destructive',
@@ -124,13 +122,10 @@ const UserPublicationsScreen = ({ route, navigation }) => {
 
   const ejecutarEliminacion = async (publicacionId) => {
     try {
-      console.log('🗑️ Eliminando publicación:', publicacionId);
       setLoading(true);
       const response = await apiRequest(`/publicaciones/${publicacionId}`, {
         method: 'DELETE',
       });
-      
-      console.log('📦 Respuesta del servidor:', response);
       
       if (response.success) {
         Alert.alert('Éxito', 'Publicación eliminada correctamente');
@@ -285,7 +280,6 @@ const UserPublicationsScreen = ({ route, navigation }) => {
                 <TouchableOpacity
                   style={[styles.actionButton, styles.deleteButton]}
                   onPress={() => {
-                    console.log('🔴 Botón eliminar presionado');
                     handleEliminar(publicacion.id_publicacion, publicacion.titulo);
                   }}
                   activeOpacity={0.7}
@@ -319,7 +313,6 @@ const UserPublicationsScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => {
-                  console.log('Usuario canceló');
                   setShowDeleteModal(false);
                   setPublicacionToDelete(null);
                 }}
@@ -329,7 +322,6 @@ const UserPublicationsScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
                 onPress={() => {
-                  console.log('Usuario eligió eliminar, procediendo...');
                   if (publicacionToDelete) {
                     ejecutarEliminacion(publicacionToDelete.id);
                   }

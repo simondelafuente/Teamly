@@ -4,18 +4,6 @@ const Publicacion = require('../models/publicacion.model');
 exports.getAll = async (req, res, next) => {
   try {
     const publicaciones = await Publicacion.findAll();
-    // Log para debugging (solo en desarrollo)
-    if (process.env.NODE_ENV === 'development' && publicaciones.length > 0) {
-      console.log('📋 Publicaciones obtenidas:', publicaciones.length);
-      console.log('🔍 Ejemplo de publicación:', {
-        id: publicaciones[0].id_publicacion,
-        titulo: publicaciones[0].titulo,
-        id_actividad: publicaciones[0].id_actividad,
-        nombre_actividad: publicaciones[0].nombre_actividad,
-        actividad_tipo: publicaciones[0].actividad_tipo,
-        actividad_imagen: publicaciones[0].actividad_imagen
-      });
-    }
     res.json({
       success: true,
       data: publicaciones,

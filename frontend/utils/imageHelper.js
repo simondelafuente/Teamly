@@ -19,30 +19,12 @@ export const getImageUrl = (imagePath) => {
   // Si la ruta ya empieza con /uploads, usar directamente
   // Esto incluye /uploads/avatars/avatar1.jpg, /uploads/actividades/futbol.jpg, etc.
   if (imagePath.startsWith('/uploads')) {
-    const fullUrl = `${baseUrl}${imagePath}`;
-    // Log para debugging (solo en desarrollo)
-    if (__DEV__) {
-      console.log('🖼️ Construyendo URL de imagen (uploads):', {
-        imagePath,
-        baseUrl,
-        fullUrl
-      });
-    }
-    return fullUrl;
+    return `${baseUrl}${imagePath}`;
   }
   
   // Si es solo un nombre de archivo (ej: 'futbol.jpg'), asumir que está en /uploads/actividades/
   if (!imagePath.includes('/')) {
-    const fullUrl = `${baseUrl}/uploads/actividades/${imagePath}`;
-    // Log para debugging (solo en desarrollo)
-    if (__DEV__) {
-      console.log('🖼️ Construyendo URL de imagen (actividades):', {
-        imagePath,
-        baseUrl,
-        fullUrl
-      });
-    }
-    return fullUrl;
+    return `${baseUrl}/uploads/actividades/${imagePath}`;
   }
   
   // Si tiene una ruta relativa, agregar /uploads si no está presente

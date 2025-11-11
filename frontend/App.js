@@ -12,6 +12,10 @@ import MessagesListScreen from './screens/MessagesListScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import UserPublicationsScreen from './screens/UserPublicationsScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
+import GamesNotificationsScreen from './screens/GamesNotificationsScreen';
+import SportsNotificationsScreen from './screens/SportsNotificationsScreen';
+import RecoverPasswordScreen from './screens/RecoverPasswordScreen';
 import SplashScreen from './screens/SplashScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -140,6 +144,34 @@ export default function App() {
         <Stack.Screen 
           name="UserPublications" 
           component={UserPublicationsScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="Notifications" 
+          component={NotificationsScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="GamesNotifications" 
+          component={GamesNotificationsScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="SportsNotifications" 
+          component={SportsNotificationsScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="RecoverPassword" 
+          component={RecoverPasswordScreen}
           options={{ 
             headerShown: false,
           }}

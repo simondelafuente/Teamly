@@ -17,6 +17,8 @@ router.post('/', (req, res, next) => {
   }
 }, usuarioController.create);
 router.post('/login', usuarioController.login);
+router.post('/verify-security', usuarioController.verifySecurity);
+router.put('/reset-password', usuarioController.resetPassword);
 router.put('/:id', (req, res, next) => {
   if (req.headers['content-type'] && req.headers['content-type'].includes('multipart/form-data')) {
     upload.single('foto_perfil')(req, res, next);

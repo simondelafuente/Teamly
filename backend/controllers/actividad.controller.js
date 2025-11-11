@@ -36,6 +36,23 @@ exports.getById = async (req, res, next) => {
   }
 };
 
+// Obtener actividades por tipo
+exports.getByTipo = async (req, res, next) => {
+  try {
+    const { tipo } = req.params;
+    const actividades = await Actividad.findByTipo(tipo);
+    
+    res.json({
+      success: true,
+      data: actividades,
+      count: actividades.length
+    });
+  } catch (error) {
+    console.error('Error en getByTipo:', error);
+    next(error);
+  }
+};
+
 // Crear una nueva actividad
 exports.create = async (req, res, next) => {
   try {

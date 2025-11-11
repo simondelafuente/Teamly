@@ -105,11 +105,6 @@ exports.create = async (req, res, next) => {
 exports.update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    console.log('🔄 Iniciando actualización de comentario:', {
-      id,
-      body: req.body
-    });
-    
     const comentario = await Comentario.update(id, req.body);
     
     if (!comentario) {
@@ -119,18 +114,13 @@ exports.update = async (req, res, next) => {
       });
     }
     
-    console.log('✅ Comentario actualizado en controller:', {
-      id: comentario.id_comentario,
-      created_at: comentario.created_at
-    });
-    
     res.json({
       success: true,
       message: 'Comentario actualizado correctamente',
       data: comentario
     });
   } catch (error) {
-    console.error('❌ Error en controller al actualizar comentario:', error);
+    console.error('Error en controller al actualizar comentario:', error);
     next(error);
   }
 };

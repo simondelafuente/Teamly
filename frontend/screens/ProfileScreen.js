@@ -53,8 +53,6 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = () => {
-    console.log('🔴 handleLogout llamado');
-    
     if (Platform.OS === 'web') {
       // En web, usar modal personalizado
       setShowLogoutModal(true);
@@ -67,9 +65,6 @@ const ProfileScreen = ({ navigation }) => {
           {
             text: 'Cancelar',
             style: 'cancel',
-            onPress: () => {
-              console.log('Usuario canceló el logout');
-            },
           },
           {
             text: 'Cerrar Sesión',
@@ -85,35 +80,29 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const ejecutarLogout = async () => {
-    console.log('Usuario confirmó el logout, procediendo...');
     try {
       // Cerrar sesión y limpiar datos
-      console.log('Llamando a authService.logout()...');
-      const logoutSuccess = await authService.logout();
-      console.log('Resultado de logout:', logoutSuccess);
+      await authService.logout();
       
       // Cerrar modal si está abierto
       setShowLogoutModal(false);
       
       // Navegar a Login y resetear completamente la navegación
-      console.log('Navegando a Login...');
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
       });
-      console.log('Navegación completada');
     } catch (error) {
-      console.error('❌ Error al cerrar sesión:', error);
+      console.error('Error al cerrar sesión:', error);
       // Aún así, intentar navegar a Login
       try {
-        console.log('Intentando navegar a Login después del error...');
         setShowLogoutModal(false);
         navigation.reset({
           index: 0,
           routes: [{ name: 'Login' }],
         });
       } catch (navError) {
-        console.error('❌ Error al navegar a Login:', navError);
+        console.error('Error al navegar a Login:', navError);
         if (Platform.OS === 'web') {
           alert('Error: No se pudo cerrar sesión. Por favor, reinicia la aplicación.');
         } else {
@@ -214,7 +203,7 @@ const ProfileScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => {
-              Alert.alert('Notificaciones', 'Funcionalidad de notificaciones próximamente');
+              navigation.navigate('Notifications');
             }}
           >
             <View style={styles.menuItemLeft}>
@@ -277,7 +266,6 @@ const ProfileScreen = ({ navigation }) => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => {
-                  console.log('Usuario canceló el logout');
                   setShowLogoutModal(false);
                 }}
               >

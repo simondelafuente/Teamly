@@ -54,13 +54,7 @@ export const authService = {
       const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
       const userData = await AsyncStorage.getItem(USER_DATA_KEY);
       
-      if (token === null && userData === null) {
-        console.log('✅ Sesión cerrada correctamente');
-        return true;
-      } else {
-        console.warn('⚠️ Algunos datos no se eliminaron correctamente');
-        return true; // Devolver true de todas formas para permitir la navegación
-      }
+      return true;
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       // Devolver true de todas formas para permitir la navegación

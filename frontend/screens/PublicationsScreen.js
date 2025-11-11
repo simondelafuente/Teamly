@@ -131,18 +131,6 @@ const PublicationsScreen = ({ navigation }) => {
       setLoading(true);
       const response = await apiRequest('/publicaciones');
       if (response.success && Array.isArray(response.data)) {
-        // Log para debugging (solo en desarrollo)
-        if (__DEV__ && response.data.length > 0) {
-          console.log('📋 Publicaciones cargadas:', response.data.length);
-          console.log('🖼️ Ejemplo de publicación con imagen:', {
-            titulo: response.data[0].titulo,
-            actividad_imagen: response.data[0].actividad_imagen,
-            nombre_actividad: response.data[0].nombre_actividad,
-            actividad_tipo: response.data[0].actividad_tipo
-          });
-          // Log de todas las claves disponibles
-          console.log('🔑 Claves disponibles en publicación:', Object.keys(response.data[0]));
-        }
         setPublicaciones(response.data);
       } else {
         console.error('La respuesta no contiene un arreglo de publicaciones:', response);

@@ -15,6 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
+import { authService } from '../services/auth';
 
 const MessagesScreen = ({ route, navigation }) => {
   const { userId, userName, initialMessage } = route.params || {};
@@ -36,36 +37,81 @@ const MessagesScreen = ({ route, navigation }) => {
   const cargarMensajes = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar endpoint de mensajes con el usuario
-      // Por ahora, si hay un mensaje inicial, mostrarlo como recibido
-      const initialMessages = [];
       
+      // Obtener el usuario actual
+      const userData = await authService.getUserData();
+      if (!userData || !userData.id_usuario) {
+        Alert.alert('Error', 'No se pudo obtener la información del usuario');
+        setMessages([]);
+        return;
+      }
+
+      // Obtener la conversación entre el usuario actual y el otro usuario
+      const response = await apiRequest(`/mensajes/conversacion/${userData.id_usuario}/${userId}`);
+      
+      if (response.success && response.data) {
+        // Mapear los mensajes del backend al formato esperado por el frontend
+        const mensajesMapeados = response.data.map((mensaje) => {
+          const isSent = mensaje.id_emisor === userData.id_usuario;
+          const fechaISO = mensaje.fecha_envio;
+          const fechaFormateada = fechaISO 
+            ? formatMessageDateFromString(fechaISO)
+            : formatMessageDate();
+          
+          return {
+            id: mensaje.id_mensaje,
+            texto: mensaje.contenido || '',
+            fecha: fechaFormateada,
+            isSent: isSent,
+            isPending: false,
+          };
+        });
+        
+        setMessages(mensajesMapeados);
+        
+        // Desplazar al final cuando se cargan los mensajes
+        if (mensajesMapeados.length > 0) {
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        }
+      } else {
+        // Si no hay mensajes pero hay un mensaje inicial, mostrarlo
+        if (initialMessage) {
+          const messageDate = initialMessage.fecha 
+            ? formatMessageDateFromString(initialMessage.fecha)
+            : formatMessageDate();
+          
+          setMessages([{
+            id: `received_${Date.now()}`,
+            texto: initialMessage.texto,
+            fecha: messageDate,
+            isSent: false,
+            isPending: false,
+          }]);
+        } else {
+          setMessages([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      // Si hay error pero hay un mensaje inicial, mostrarlo
       if (initialMessage) {
-        // Formatear la fecha del mensaje inicial
         const messageDate = initialMessage.fecha 
           ? formatMessageDateFromString(initialMessage.fecha)
           : formatMessageDate();
         
-        initialMessages.push({
+        setMessages([{
           id: `received_${Date.now()}`,
           texto: initialMessage.texto,
           fecha: messageDate,
-          isSent: false, // Es un mensaje recibido
+          isSent: false,
           isPending: false,
-        });
+        }]);
+      } else {
+        Alert.alert('Error', 'No se pudieron cargar los mensajes');
+        setMessages([]);
       }
-      
-      setMessages(initialMessages);
-      
-      // Desplazar al final cuando se carga el mensaje inicial
-      if (initialMessages.length > 0) {
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-      Alert.alert('Error', 'No se pudieron cargar los mensajes');
     } finally {
       setLoading(false);
     }
@@ -99,19 +145,26 @@ const MessagesScreen = ({ route, navigation }) => {
 
     const messageText = newMessage.trim();
     
-    // Crear mensaje temporal para mostrar inmediatamente
+    // Obtener el usuario actual
+    const userData = await authService.getUserData();
+    if (!userData || !userData.id_usuario) {
+      Alert.alert('Error', 'No se pudo obtener la información del usuario');
+      return;
+    }
+
+    // Crear mensaje temporal para mostrar inmediatamente (optimistic update)
     const tempMessage = {
       id: `temp_${Date.now()}`,
       texto: messageText,
       fecha: formatMessageDate(),
       isSent: true,
-      isPending: true, // Marcar como pendiente para la demo
+      isPending: true,
     };
 
     try {
       setSending(true);
       
-      // Agregar el mensaje inmediatamente a la lista (optimistic update)
+      // Agregar el mensaje inmediatamente a la lista
       setMessages(prevMessages => [...prevMessages, tempMessage]);
       setNewMessage('');
       
@@ -120,10 +173,38 @@ const MessagesScreen = ({ route, navigation }) => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
 
-      // Simular envío (para la demo)
-      // En producción, aquí harías la llamada al API
-      setTimeout(() => {
-        // Marcar el mensaje como enviado (ya no pendiente)
+      // Enviar el mensaje a la API
+      const response = await apiRequest('/mensajes', {
+        method: 'POST',
+        body: {
+          id_emisor: userData.id_usuario,
+          id_receptor: userId,
+          contenido: messageText,
+        },
+      });
+
+      if (response.success && response.data) {
+        // Reemplazar el mensaje temporal con el mensaje real del servidor
+        const fechaISO = response.data.fecha_envio;
+        const fechaFormateada = fechaISO 
+          ? formatMessageDateFromString(fechaISO)
+          : formatMessageDate();
+        
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.id === tempMessage.id
+              ? {
+                  id: response.data.id_mensaje,
+                  texto: response.data.contenido,
+                  fecha: fechaFormateada,
+                  isSent: true,
+                  isPending: false,
+                }
+              : msg
+          )
+        );
+      } else {
+        // Si falla, marcar como enviado de todas formas (el servidor puede haberlo guardado)
         setMessages(prevMessages =>
           prevMessages.map(msg =>
             msg.id === tempMessage.id
@@ -131,9 +212,9 @@ const MessagesScreen = ({ route, navigation }) => {
               : msg
           )
         );
-        setSending(false);
-      }, 500);
+      }
       
+      setSending(false);
     } catch (error) {
       console.error('Error sending message:', error);
       // Si hay error, remover el mensaje temporal

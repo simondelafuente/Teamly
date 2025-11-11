@@ -13,11 +13,6 @@ const getApiUrl = () => {
     apiUrl = 'http://192.168.0.4:3000/api';
   }
   
-  // Log para debugging (solo en desarrollo)
-  if (__DEV__) {
-    console.log('🔗 API URL configurada:', apiUrl);
-  }
-  
   return apiUrl;
 };
 
@@ -72,7 +67,7 @@ export const apiRequest = async (endpoint, options = {}) => {
         error.message.includes('Failed to fetch') ||
         error.message.includes('ERR_CONNECTION_TIMED_OUT') ||
         error.message.includes('ERR_CONNECTION_REFUSED')) {
-      console.error('❌ Error de conexión:', {
+      console.error('Error de conexión:', {
         url,
         error: error.message,
         apiBaseUrl: apiConfig.baseURL

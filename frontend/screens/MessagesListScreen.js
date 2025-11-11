@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../utils/constants';
-import { apiRequest } from '../config/api';
-import { getImageWithFallback } from '../utils/imageHelper';
+import { apiRequest, apiConfig } from '../config/api';
+import { getImageWithFallback, getImageUrl } from '../utils/imageHelper';
 import { Image } from 'react-native';
+import { authService } from '../services/auth';
 
 // Función para formatear la fecha y hora del mensaje
 function formatMessageDateTime(dateString) {
@@ -52,40 +54,114 @@ const MessagesListScreen = ({ navigation }) => {
   const cargarMensajes = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar endpoint de mensajes recibidos
-      // Por ahora, datos de ejemplo para la demo
-      // Las fotos se cargarán desde /uploads/avatars/ usando el nombre del remitente
-      const exampleMessages = [
+      
+      // Obtener el usuario actual
+      const userData = await authService.getUserData();
+      if (!userData || !userData.id_usuario) {
+        Alert.alert('Error', 'No se pudo obtener la información del usuario');
+        setMessages([]);
+        return;
+      }
+
+      // Obtener mensajes recibidos desde la API
+      const response = await apiRequest(`/mensajes/receptor/${userData.id_usuario}`);
+      
+      // Mensajes de ejemplo con las fotos de los avatares
+      const mensajesEjemplo = [
         {
-          id: '1',
+          id: 'ejemplo_1',
           remitente: 'Juan Pérez',
-          remitente_email: 'juan@example.com',
-          remitente_foto: '/uploads/avatars/juan_perez.jpg', // Foto basada en el nombre
+          remitente_id: 'ejemplo_juan',
+          remitente_foto: getImageUrl('/uploads/avatars/juan_perez.jpg'),
           mensaje: 'Hola! Me interesa unirme a tu publicación de fútbol. ¿Todavía hay vacantes?',
           fecha: new Date().toISOString(),
         },
         {
-          id: '2',
+          id: 'ejemplo_2',
           remitente: 'María García',
-          remitente_email: 'maria@example.com',
-          remitente_foto: '/uploads/avatars/maria_garcia.jpg', // Foto basada en el nombre
-          mensaje: '¿A qué hora es el partido de básquet?',
+          remitente_id: 'ejemplo_maria',
+          remitente_foto: getImageUrl('/uploads/avatars/maria_garcia.jpg'),
+          mensaje: '¿A qué hora es el partido de básquet? Me gustaría participar.',
           fecha: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // Hace 2 horas
         },
         {
-          id: '3',
+          id: 'ejemplo_3',
           remitente: 'Carlos López',
-          remitente_email: 'carlos@example.com',
-          remitente_foto: '/uploads/avatars/carlos_lopez.jpg', // Foto basada en el nombre
+          remitente_id: 'ejemplo_carlos',
+          remitente_foto: getImageUrl('/uploads/avatars/carlos_lopez.jpg'),
           mensaje: 'Perfecto, me apunto al torneo de Rocket League. ¿Dónde nos encontramos?',
           fecha: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Ayer
         },
       ];
       
-      setMessages(exampleMessages);
+      if (response.success && response.data && response.data.length > 0) {
+        // Mapear los mensajes del backend al formato esperado por el frontend
+        // Agrupar mensajes por remitente para mostrar solo el último mensaje de cada conversación
+        const mensajesAgrupados = {};
+        
+        response.data.forEach((mensaje) => {
+          const remitenteId = mensaje.id_emisor;
+          
+          // Si no existe o si este mensaje es más reciente, actualizar
+          if (!mensajesAgrupados[remitenteId] || 
+              new Date(mensaje.fecha_envio) > new Date(mensajesAgrupados[remitenteId].fecha)) {
+            mensajesAgrupados[remitenteId] = {
+              id: mensaje.id_mensaje,
+              remitente: mensaje.emisor_nombre || 'Usuario',
+              remitente_id: mensaje.id_emisor,
+              remitente_foto: mensaje.emisor_foto || null,
+              mensaje: mensaje.contenido || '',
+              fecha: mensaje.fecha_envio,
+            };
+          }
+        });
+
+        // Convertir el objeto agrupado a array y ordenar por fecha
+        const mensajesLista = Object.values(mensajesAgrupados).sort(
+          (a, b) => new Date(b.fecha) - new Date(a.fecha)
+        );
+        
+        // Combinar mensajes reales con los de ejemplo
+        const todosLosMensajes = [...mensajesLista, ...mensajesEjemplo];
+        
+        // Ordenar todos por fecha (más recientes primero)
+        todosLosMensajes.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        
+        setMessages(todosLosMensajes);
+      } else {
+        // Si no hay mensajes reales, mostrar solo los de ejemplo
+        setMessages(mensajesEjemplo);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
-      setMessages([]);
+      // En caso de error, mostrar los mensajes de ejemplo
+      const mensajesEjemplo = [
+        {
+          id: 'ejemplo_1',
+          remitente: 'Juan Pérez',
+          remitente_id: 'ejemplo_juan',
+          remitente_foto: getImageUrl('/uploads/avatars/juan_perez.jpg'),
+          mensaje: 'Hola! Me interesa unirme a tu publicación de fútbol. ¿Todavía hay vacantes?',
+          fecha: new Date().toISOString(),
+        },
+        {
+          id: 'ejemplo_2',
+          remitente: 'María García',
+          remitente_id: 'ejemplo_maria',
+          remitente_foto: getImageUrl('/uploads/avatars/maria_garcia.jpg'),
+          mensaje: '¿A qué hora es el partido de básquet? Me gustaría participar.',
+          fecha: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'ejemplo_3',
+          remitente: 'Carlos López',
+          remitente_id: 'ejemplo_carlos',
+          remitente_foto: getImageUrl('/uploads/avatars/carlos_lopez.jpg'),
+          mensaje: 'Perfecto, me apunto al torneo de Rocket League. ¿Dónde nos encontramos?',
+          fecha: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        },
+      ];
+      setMessages(mensajesEjemplo);
     } finally {
       setLoading(false);
     }
@@ -94,7 +170,7 @@ const MessagesListScreen = ({ navigation }) => {
   const handleMessagePress = (message) => {
     // Navegar a la pantalla de conversación con el remitente
     navigation.navigate('Messages', {
-      userId: message.remitente_email, // En producción usarías el ID del usuario
+      userId: message.remitente_id,
       userName: message.remitente,
       initialMessage: {
         texto: message.mensaje,

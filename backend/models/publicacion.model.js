@@ -17,19 +17,6 @@ class Publicacion {
          ORDER BY p.created_at DESC`
       );
       
-      // Log para debugging
-      if (process.env.NODE_ENV === 'development' && result.rows.length > 0) {
-        console.log('🔍 Modelo - Primera publicación:', {
-          id: result.rows[0].id_publicacion,
-          titulo: result.rows[0].titulo,
-          id_actividad: result.rows[0].id_actividad,
-          nombre_actividad: result.rows[0].nombre_actividad,
-          actividad_tipo: result.rows[0].actividad_tipo,
-          'tipo (directo)': result.rows[0].tipo,
-          claves: Object.keys(result.rows[0])
-        });
-      }
-      
       return result.rows;
     } catch (error) {
       throw new Error(`Error al obtener publicaciones: ${error.message}`);

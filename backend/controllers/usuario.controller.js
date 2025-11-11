@@ -93,7 +93,6 @@ exports.create = async (req, res, next) => {
       pregunta_seguridad: req.body.pregunta_seguridad.trim(),
       respuesta_seguridad: req.body.respuesta_seguridad.trim(),
       foto_perfil: null,
-      fcm_token: req.body.fcm_token || null,
     };
 
     // Si hay un archivo subido, guardar la ruta
@@ -207,6 +206,100 @@ exports.login = async (req, res, next) => {
       success: true,
       message: 'Login exitoso',
       data: usuarioSinPassword
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Verificar credenciales de seguridad para recuperar contraseña
+exports.verifySecurity = async (req, res, next) => {
+  try {
+    const { email, pregunta_seguridad, respuesta_seguridad } = req.body;
+    
+    if (!email || !pregunta_seguridad || !respuesta_seguridad) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, pregunta de seguridad y respuesta son requeridos'
+      });
+    }
+    
+    // Buscar usuario por email
+    const usuario = await Usuario.findByEmail(email);
+    
+    if (!usuario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+    
+    // Verificar pregunta y respuesta de seguridad
+    if (usuario.pregunta_seguridad !== pregunta_seguridad || 
+        usuario.respuesta_seguridad !== respuesta_seguridad) {
+      return res.status(401).json({
+        success: false,
+        message: 'Pregunta o respuesta de seguridad incorrectas'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Credenciales verificadas correctamente',
+      data: {
+        id_usuario: usuario.id_usuario,
+        email: usuario.email
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Resetear contraseña
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { email, nueva_contrasena } = req.body;
+    
+    if (!email || !nueva_contrasena) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email y nueva contraseña son requeridos'
+      });
+    }
+    
+    if (nueva_contrasena.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'La contraseña debe tener al menos 6 caracteres'
+      });
+    }
+    
+    // Buscar usuario por email
+    const usuario = await Usuario.findByEmail(email);
+    
+    if (!usuario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+    
+    // Actualizar contraseña
+    const usuarioActualizado = await Usuario.update(usuario.id_usuario, {
+      contrasena: nueva_contrasena
+    });
+    
+    if (!usuarioActualizado) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al actualizar la contraseña'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Contraseña actualizada correctamente'
     });
   } catch (error) {
     next(error);

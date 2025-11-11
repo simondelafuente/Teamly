@@ -20,10 +20,14 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
+    // Limpiar mensajes de error anteriores
+    setErrorMessage('');
+
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+      setErrorMessage('Por favor completa todos los campos');
       return;
     }
 
@@ -31,10 +35,16 @@ const LoginScreen = ({ navigation }) => {
     try {
       const response = await authService.login(email, password);
       if (response.success) {
+        setErrorMessage('');
         navigation.replace('Home');
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Error al iniciar sesión');
+      // Mostrar mensaje de error específico
+      if (error.message && (error.message.includes('incorrectos') || error.message.includes('incorrect'))) {
+        setErrorMessage('Email o contraseña incorrectos');
+      } else {
+        setErrorMessage(error.message || 'Error al iniciar sesión. Intenta nuevamente.');
+      }
     } finally {
       setLoading(false);
     }
@@ -47,7 +57,7 @@ const LoginScreen = ({ navigation }) => {
 
   //recuperar contraseña
   const handleForgotPassword = () => {
-    Alert.alert('Recuperar Contraseña', 'Funcionalidad próximamente');
+    navigation.navigate('RecoverPassword');
   };
 
   return (
@@ -61,14 +71,13 @@ const LoginScreen = ({ navigation }) => {
         keyboardShouldPersistTaps="handled"
       >
         {/* Título principal */}
-        <Text style={styles.mainTitle}>Log In</Text>
+        <Text style={styles.mainTitle}>Iniciar Sesión</Text>
 
         {/* Sección de bienvenida */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome!</Text>
+          <Text style={styles.welcomeTitle}>¡Bienvenido!</Text>
           <Text style={styles.welcomeText}>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Ingresa tus credenciales para acceder a tu cuenta y comenzar a disfrutar de todas las funcionalidades.
           </Text>
         </View>
 
@@ -77,10 +86,13 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.label}>Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="example@example.com"
+            placeholder="usuario@ejemplo.com"
             placeholderTextColor="#8E8E93"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              setErrorMessage(''); // Limpiar error al escribir
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -89,14 +101,17 @@ const LoginScreen = ({ navigation }) => {
 
         {/* Campo de Password */}
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Password</Text>
+          <Text style={styles.label}>Contraseña</Text>
           <View style={styles.passwordContainer}>
             <TextInput
               style={styles.passwordInput}
               placeholder="**********"
               placeholderTextColor="#8E8E93"
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                setErrorMessage(''); // Limpiar error al escribir
+              }}
               secureTextEntry={!showPassword}
               autoCapitalize="none"
               autoCorrect={false}
@@ -119,8 +134,16 @@ const LoginScreen = ({ navigation }) => {
           style={styles.forgotPasswordContainer}
           onPress={handleForgotPassword}
         >
-          <Text style={styles.forgotPasswordText}>Forget Password</Text>
+          <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
         </TouchableOpacity>
+
+        {/* Mensaje de error */}
+        {errorMessage ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={20} color={COLORS.error} />
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          </View>
+        ) : null}
 
         {/* Botón de Login */}
         <TouchableOpacity
@@ -129,7 +152,7 @@ const LoginScreen = ({ navigation }) => {
           disabled={loading}
         >
           <Text style={styles.loginButtonText}>
-            {loading ? 'Iniciando sesión...' : 'Log In'}
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Text>
         </TouchableOpacity>
 
@@ -139,7 +162,7 @@ const LoginScreen = ({ navigation }) => {
           onPress={handleSignUp}
           disabled={loading}
         >
-          <Text style={styles.signUpButtonText}>Sign Up</Text>
+          <Text style={styles.signUpButtonText}>Registrarse</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -252,6 +275,23 @@ const styles = StyleSheet.create({
     fontSize: SIZES.large,
     fontWeight: 'bold',
     color: COLORS.textDark,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    borderRadius: SIZES.borderRadius,
+    padding: SIZES.padding,
+    marginBottom: SIZES.margin,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    gap: 8,
+  },
+  errorText: {
+    flex: 1,
+    color: COLORS.error,
+    fontSize: SIZES.medium,
+    fontWeight: '500',
   },
 });
 

@@ -91,15 +91,6 @@ const UserCommentsScreen = ({ route, navigation }) => {
     try {
       const response = await apiRequest(`/comentarios/usuario/${userId}`);
       if (response.success && Array.isArray(response.data)) {
-        // Log para debugging
-        if (__DEV__ && response.data.length > 0) {
-          console.log('📋 Comentarios cargados:', response.data.length);
-          console.log('🔍 Ejemplo de comentario:', {
-            id: response.data[0].id_comentario,
-            contenido: response.data[0].contenido,
-            created_at: response.data[0].created_at
-          });
-        }
         setComments(response.data);
       }
     } catch (error) {
