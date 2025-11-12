@@ -21,7 +21,6 @@ import { authService } from '../services/auth';
 import { apiRequest } from '../config/api';
 import { getImageWithFallback } from '../utils/imageHelper';
 
-// URLs de avatares en el servidor
 const getAvatarUrl = (avatarNumber) => {
   const { apiConfig } = require('../config/api');
   const baseUrl = apiConfig.baseURL.replace('/api', '');
@@ -63,7 +62,7 @@ const EditProfileScreen = ({ navigation, route }) => {
     }
   };
 
-  // Solicitar permisos para acceder a la galería
+  // acceso a galeria
   const requestImagePermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -125,7 +124,6 @@ const EditProfileScreen = ({ navigation, route }) => {
 
   // Seleccionar avatar predeterminado
   const selectAvatar = (avatarNumber) => {
-    // Guardar la ruta del avatar que estará en el servidor
     if (avatarNumber === 1) {
       setSelectedImage('/uploads/avatars/avatar1.jpg');
     } else if (avatarNumber === 2) {
@@ -136,12 +134,10 @@ const EditProfileScreen = ({ navigation, route }) => {
     setShowAvatarModal(false);
   };
 
-  // Mostrar modal de selección de foto
   const showImageOptions = () => {
     setShowAvatarModal(true);
   };
 
-  // Validar formulario
   const validarFormulario = () => {
     if (!nombreCompleto.trim()) {
       Alert.alert('Error', 'Por favor ingresa tu nombre completo');
@@ -173,13 +169,11 @@ const EditProfileScreen = ({ navigation, route }) => {
 
       let response;
 
-      // Si hay una nueva imagen seleccionada (URI local de dispositivo)
       if (selectedImage && selectedImage.startsWith('file://')) {
         const formData = new FormData();
         formData.append('nombre_completo', nombreCompleto.trim());
         formData.append('email', email.trim().toLowerCase());
         
-        // Agregar imagen
         const filename = selectedImage.split('/').pop();
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
@@ -190,7 +184,6 @@ const EditProfileScreen = ({ navigation, route }) => {
           type: type,
         });
 
-        // Hacer request con FormData
         response = await fetch(url, {
           method: 'PUT',
           body: formData,
@@ -212,19 +205,15 @@ const EditProfileScreen = ({ navigation, route }) => {
 
         response = data;
       } else {
-        // Sin imagen nueva de dispositivo, usar JSON normal
         const updateData = {
           nombre_completo: nombreCompleto.trim(),
           email: email.trim().toLowerCase(),
         };
 
-        // Si selectedImage es un avatar o una URL, enviarla
         if (selectedImage) {
           if (selectedImage.startsWith('/uploads/avatars/')) {
-            // Es un avatar del servidor, usar la ruta directamente
             updateData.foto_perfil = selectedImage;
           } else if (!selectedImage.startsWith('file://')) {
-            // Es una URL existente
             updateData.foto_perfil = selectedImage;
           }
         }
@@ -236,7 +225,6 @@ const EditProfileScreen = ({ navigation, route }) => {
       }
 
       if (response.success) {
-        // Actualizar datos en AsyncStorage
         const AsyncStorage = require('@react-native-async-storage/async-storage').default;
         const updatedUserData = {
           ...userData,
@@ -246,12 +234,11 @@ const EditProfileScreen = ({ navigation, route }) => {
         };
         await AsyncStorage.setItem('@teamly:user_data', JSON.stringify(updatedUserData));
 
-        // Mostrar mensaje breve de éxito
         setShowSuccessMessage(true);
         setTimeout(() => {
           setShowSuccessMessage(false);
           navigation.goBack();
-        }, 1500);
+        }, 1200);
       } else {
         throw new Error(response.message || 'Error al actualizar el perfil');
       }

@@ -23,7 +23,6 @@ const LoginScreen = ({ navigation }) => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
-    // Limpiar mensajes de error anteriores
     setErrorMessage('');
 
     if (!email.trim() || !password.trim()) {
@@ -39,7 +38,6 @@ const LoginScreen = ({ navigation }) => {
         navigation.replace('Home');
       }
     } catch (error) {
-      // Mostrar mensaje de error específico
       if (error.message && (error.message.includes('incorrectos') || error.message.includes('incorrect'))) {
         setErrorMessage('Email o contraseña incorrectos');
       } else {

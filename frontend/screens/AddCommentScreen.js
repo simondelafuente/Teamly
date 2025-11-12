@@ -70,7 +70,6 @@ const AddCommentScreen = ({ route, navigation }) => {
       const userData = await authService.getUserData();
       if (userData && userData.id_usuario) {
         setCurrentUserId(userData.id_usuario);
-        // Verificar si ya existe un comentario
         await verificarComentarioExistente(userData.id_usuario);
       } else {
         Alert.alert('Error', 'No se pudo obtener la información del usuario');
@@ -94,9 +93,7 @@ const AddCommentScreen = ({ route, navigation }) => {
       if (response.success && response.exists) {
         console.log('Comentario existente encontrado:', response.data);
         setExistingComment(response.data);
-        // Cargar el comentario y puntuación existentes
         setComment(response.data.contenido || '');
-        // Cargar la puntuación existente
         const ratingResponse = await apiRequest(
           `/puntuaciones/usuario/${userId}`
         );
@@ -162,14 +159,11 @@ const AddCommentScreen = ({ route, navigation }) => {
     
     console.log('Pasando validaciones, procediendo...');
 
-    // Si ya existe un comentario, mostrar confirmación (solo una)
     if (existingComment) {
       console.log('Mostrando alert de comentario existente');
       if (Platform.OS === 'web') {
-        // En web, usar modal personalizado
         setShowConfirmModal(true);
       } else {
-        // En móvil, usar Alert nativo
         Alert.alert(
           'Comentario Existente',
           'Ya has comentado a este usuario anteriormente. Si continúas, tu comentario anterior será reemplazado por este nuevo comentario.',
@@ -193,8 +187,6 @@ const AddCommentScreen = ({ route, navigation }) => {
       }
       return;
     }
-
-    // Si no existe, proceder normalmente
     await guardarComentario();
   };
 
@@ -202,8 +194,7 @@ const AddCommentScreen = ({ route, navigation }) => {
     setLoading(true);
     try {
       let commentResponse;
-      
-      // Si ya existe un comentario, actualizarlo; si no, crearlo
+
       if (existingComment) {
         console.log('Actualizando comentario existente:', existingComment.id_comentario);
         commentResponse = await apiRequest(`/comentarios/${existingComment.id_comentario}`, {
@@ -226,7 +217,6 @@ const AddCommentScreen = ({ route, navigation }) => {
         console.log('Respuesta creación comentario:', commentResponse);
       }
 
-      // Actualizar o crear puntuación
       console.log('Actualizando/creando puntuación');
       const ratingResponse = await apiRequest('/puntuaciones/create-or-update', {
         method: 'POST',
@@ -238,7 +228,6 @@ const AddCommentScreen = ({ route, navigation }) => {
       });
       console.log('Respuesta puntuación:', ratingResponse);
 
-      // Verificar respuestas
       if (!commentResponse) {
         throw new Error('No se recibió respuesta del servidor para el comentario');
       }
@@ -247,12 +236,10 @@ const AddCommentScreen = ({ route, navigation }) => {
         throw new Error('No se recibió respuesta del servidor para la puntuación');
       }
 
-      // Algunos endpoints pueden no devolver success explícitamente
       const commentSuccess = commentResponse.success !== false;
       const ratingSuccess = ratingResponse.success !== false;
 
       if (commentSuccess && ratingSuccess) {
-        // Mostrar mensaje de éxito y navegar automáticamente
         Alert.alert(
           '¡Éxito!',
           existingComment 
@@ -272,13 +259,12 @@ const AddCommentScreen = ({ route, navigation }) => {
           { cancelable: false }
         );
         
-        // Navegar automáticamente después de 1.5 segundos
         setTimeout(() => {
           navigation.navigate('UserComments', { 
             userId, 
             userName 
           });
-        }, 1500);
+        }, 1200);
       } else {
         const errorMsg = commentResponse.message || ratingResponse.message || 'Error al guardar el comentario o la puntuación';
         throw new Error(errorMsg);

@@ -95,13 +95,9 @@ exports.create = async (req, res, next) => {
       foto_perfil: null,
     };
 
-    // Si hay un archivo subido, guardar la ruta
     if (req.file) {
-      // Guardar la ruta relativa o URL del archivo
-      // En producción, deberías subir esto a un servicio de almacenamiento (S3, Cloudinary, etc.)
       userData.foto_perfil = `/uploads/${req.file.filename}`;
     } else if (req.body.foto_perfil) {
-      // Si viene como string (URL o path), usarlo directamente
       userData.foto_perfil = req.body.foto_perfil;
     }
 
@@ -113,7 +109,6 @@ exports.create = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Error en create usuario:', error);
-    // Si es un error de base de datos, dar un mensaje más específico
     if (error.message && error.message.includes('duplicate key')) {
       return res.status(400).json({
         success: false,
@@ -191,7 +186,7 @@ exports.login = async (req, res, next) => {
       });
     }
     
-    // Validar contraseña (comparación simple - en producción usar bcrypt)
+    // Validar contraseña (comparación simple)
     if (usuario.contrasena !== contrasena) {
       return res.status(401).json({
         success: false,

@@ -5,7 +5,6 @@ import { COLORS } from '../utils/constants';
 
 const HomeScreen = ({ navigation }) => {
   useEffect(() => {
-    // Redirigir automáticamente a PublicationsScreen
     navigation.replace('Publications');
   }, [navigation]);
 

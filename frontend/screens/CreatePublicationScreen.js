@@ -33,7 +33,6 @@ function formatTime(date) {
   return `${hours}:${minutes}:00`;
 }
 
-// Función para ajustar la fecha
 function adjustDate(date) {
   const adjustedDate = new Date(date);
   adjustedDate.setMinutes(adjustedDate.getMinutes() + adjustedDate.getTimezoneOffset());
@@ -41,7 +40,6 @@ function adjustDate(date) {
   return adjustedDate;
 }
 
-// Componente para input de fecha en web
 const WebDateInput = ({ value, onChange, style }) => {
   if (Platform.OS !== 'web') {
     return null;
@@ -65,7 +63,6 @@ const WebDateInput = ({ value, onChange, style }) => {
   });
 };
 
-// Componente para input de hora en web
 const WebTimeInput = ({ value, onChange, style }) => {
   if (Platform.OS !== 'web') {
     return null;
@@ -127,7 +124,6 @@ const CreatePublicationScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState(null);
 
-  // Zonas disponibles (mismo listado que en PublicationsScreen)
   const zonas = [
     'Recoleta',
     'Palermo',
@@ -141,13 +137,11 @@ const CreatePublicationScreen = ({ navigation, route }) => {
     'Puerto Madero',
   ];
 
-  // Cargar actividades y datos del usuario
   useEffect(() => {
     cargarActividades();
     cargarUsuario();
   }, []);
 
-  // Cargar actividad seleccionada cuando las actividades estén disponibles en modo edición
   useEffect(() => {
     if (isEditMode && actividades.length > 0 && publication.id_actividad && !actividadSeleccionada) {
       const actividad = actividades.find(a => a.id_actividad === publication.id_actividad);
@@ -180,7 +174,6 @@ const CreatePublicationScreen = ({ navigation, route }) => {
     }
   };
 
-  // Filtrar actividades por búsqueda
   const actividadesFiltradas = actividades.filter((actividad) =>
     actividad.nombre_actividad
       .toLowerCase()
@@ -202,7 +195,6 @@ const CreatePublicationScreen = ({ navigation, route }) => {
       Alert.alert('Error', 'Por favor selecciona una actividad');
       return false;
     }
-    // Dirección y zona son opcionales, no se validan
     if (!vacantes || isNaN(parseInt(vacantes)) || parseInt(vacantes) <= 0) {
       Alert.alert('Error', 'Por favor ingresa un número válido de vacantes disponibles');
       return false;
@@ -241,13 +233,12 @@ const CreatePublicationScreen = ({ navigation, route }) => {
 
       let response;
       if (isEditMode && publicationId) {
-        // Actualizar publicación existente
+
         response = await apiRequest(`/publicaciones/${publicationId}`, {
           method: 'PUT',
           body: publicacionData,
         });
       } else {
-        // Crear nueva publicación
         response = await apiRequest('/publicaciones', {
           method: 'POST',
           body: publicacionData,
@@ -255,7 +246,6 @@ const CreatePublicationScreen = ({ navigation, route }) => {
       }
 
       if (response.success) {
-        // Limpiar formulario solo si no es edición
         if (!isEditMode) {
           setTitulo('');
           setActividadSeleccionada(null);
@@ -266,7 +256,6 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           setHora(null);
         }
         
-        // Mostrar mensaje de éxito y navegar automáticamente
         Alert.alert(
           isEditMode ? '¡Publicación Actualizada!' : '¡Publicación Creada!',
           isEditMode 
@@ -277,7 +266,6 @@ const CreatePublicationScreen = ({ navigation, route }) => {
               text: 'OK',
               onPress: () => {
                 if (isEditMode) {
-                  // Navegar a Mis Publicaciones con el userId
                   navigation.navigate('UserPublications', { userId: userId });
                 } else {
                   navigation.navigate('Publications', { refresh: true });
@@ -288,14 +276,13 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           { cancelable: false }
         );
         
-        // Navegar automáticamente después de 1.5 segundos
         setTimeout(() => {
           if (isEditMode) {
             navigation.navigate('UserPublications', { userId: userId });
           } else {
             navigation.navigate('Publications', { refresh: true });
           }
-        }, 1500);
+        }, 1200);
       } else {
         throw new Error(response.message || (isEditMode ? 'Error al actualizar la publicación' : 'Error al crear la publicación'));
       }

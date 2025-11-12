@@ -32,7 +32,6 @@ const SportsNotificationsScreen = ({ navigation }) => {
       
       if (response.success && response.data) {
         setSports(response.data);
-        // Inicializar todas las notificaciones como desactivadas
         const initialNotifications = {};
         response.data.forEach(sport => {
           initialNotifications[sport.id_actividad] = false;

@@ -17,9 +17,7 @@ export const authService = {
       });
 
       if (response.success && response.data) {
-        // Guardar datos del usuario en AsyncStorage
         await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(response.data));
-        // Si el backend devuelve un token, guardarlo también
         if (response.token) {
           await AsyncStorage.setItem(AUTH_TOKEN_KEY, response.token);
         }
@@ -28,7 +26,6 @@ export const authService = {
         throw new Error(response.message || 'Error al iniciar sesión');
       }
     } catch (error) {
-      // Si el error tiene un mensaje, usarlo; si no, usar un mensaje genérico
       const errorMessage = error.message || 'Error al conectar con el servidor';
       throw new Error(errorMessage);
     }
@@ -37,7 +34,6 @@ export const authService = {
   // Logout
   logout: async () => {
     try {
-      // Intentar eliminar ambos items, incluso si uno falla
       try {
         await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
       } catch (e) {
@@ -50,14 +46,12 @@ export const authService = {
         console.warn('Error al eliminar datos de usuario:', e);
       }
       
-      // Verificar que se eliminaron correctamente
       const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
       const userData = await AsyncStorage.getItem(USER_DATA_KEY);
       
       return true;
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      // Devolver true de todas formas para permitir la navegación
       return true;
     }
   },
@@ -83,7 +77,6 @@ export const authService = {
     }
   },
 
-  // Verificar si el usuario está autenticado
   isAuthenticated: async () => {
     try {
       const userData = await AsyncStorage.getItem(USER_DATA_KEY);
@@ -98,7 +91,6 @@ export const authService = {
     try {
       let response;
 
-      // Si hay imagen, usar FormData
       if (imageUri && typeof imageUri === 'string' && imageUri.startsWith('file://')) {
         const formData = new FormData();
         formData.append('nombre_completo', userData.nombre_completo);
@@ -106,8 +98,7 @@ export const authService = {
         formData.append('contrasena', userData.contrasena);
         formData.append('pregunta_seguridad', userData.pregunta_seguridad);
         formData.append('respuesta_seguridad', userData.respuesta_seguridad);
-        
-        // Agregar imagen
+      
         const filename = imageUri.split('/').pop();
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
@@ -118,7 +109,6 @@ export const authService = {
           type: type,
         });
 
-        // Hacer request con FormData
         const { apiConfig } = require('../config/api');
         const url = `${apiConfig.baseURL}/usuarios`;
         
@@ -143,7 +133,6 @@ export const authService = {
 
         return data;
       } else {
-        // Sin imagen, usar JSON normal
         response = await apiRequest('/usuarios', {
           method: 'POST',
           body: userData,

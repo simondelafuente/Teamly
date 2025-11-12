@@ -31,7 +31,7 @@ function formatDateDisplay(dateString) {
 // Función para formatear la hora
 function formatTime(timeString) {
   if (!timeString) return '';
-  // Si viene en formato HH:MM:SS, solo tomar HH:MM
+  // tomar solo horas y minutos
   if (timeString.includes(':')) {
     const parts = timeString.split(':');
     const hours = parseInt(parts[0]);
@@ -41,38 +41,6 @@ function formatTime(timeString) {
     return `${displayHours}:${minutes} ${period}`;
   }
   return timeString;
-}
-
-// Función para obtener el rango de tiempo (asumiendo 30 minutos por defecto)
-function getTimeRange(timeString) {
-  if (!timeString) return '';
-  // Calcular hora de inicio y fin
-  if (timeString.includes(':')) {
-    const parts = timeString.split(':');
-    let startHours = parseInt(parts[0]);
-    let startMinutes = parseInt(parts[1]);
-    
-    // Formatear hora de inicio
-    const startPeriod = startHours >= 12 ? 'PM' : 'AM';
-    const displayStartHours = startHours > 12 ? startHours - 12 : startHours === 0 ? 12 : startHours;
-    const formattedStart = `${displayStartHours}:${String(startMinutes).padStart(2, '0')} ${startPeriod}`;
-    
-    // Calcular hora de fin (30 minutos después)
-    let endHours = startHours;
-    let endMinutes = startMinutes + 30;
-    if (endMinutes >= 60) {
-      endHours += 1;
-      endMinutes -= 60;
-    }
-    
-    // Formatear hora de fin
-    const endPeriod = endHours >= 12 ? 'PM' : 'AM';
-    const displayEndHours = endHours > 12 ? endHours - 12 : endHours === 0 ? 12 : endHours;
-    const formattedEnd = `${displayEndHours}:${String(endMinutes).padStart(2, '0')} ${endPeriod}`;
-    
-    return `${formattedStart} - ${formattedEnd}`;
-  }
-  return formatTime(timeString);
 }
 
 const PublicationDetailScreen = ({ route, navigation }) => {
@@ -110,7 +78,6 @@ const PublicationDetailScreen = ({ route, navigation }) => {
       Alert.alert('Error', 'No se puede acceder a los comentarios');
       return;
     }
-    // Navegar a comentarios del usuario creador
     navigation.navigate('UserComments', { 
       userId: publicacionData.id_usuario,
       userName: publicacionData.usuario_nombre || 'Usuario'
@@ -122,7 +89,6 @@ const PublicationDetailScreen = ({ route, navigation }) => {
       Alert.alert('Error', 'No se puede acceder a los mensajes');
       return;
     }
-    // Navegar a mensajes con el usuario creador
     navigation.navigate('Messages', { 
       userId: publicacionData.id_usuario,
       userName: publicacionData.usuario_nombre || 'Usuario'
@@ -149,7 +115,6 @@ const PublicationDetailScreen = ({ route, navigation }) => {
     );
   }
 
-  // Construir URL de imagen
   const imageUri = getImageWithFallback(
     publicacionData.actividad_imagen,
     publicacionData.usuario_foto,

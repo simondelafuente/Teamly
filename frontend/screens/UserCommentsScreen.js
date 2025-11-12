@@ -18,7 +18,6 @@ import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
 import { getImageWithFallback } from '../utils/imageHelper';
 
-// Componente para mostrar estrellas
 const StarRating = ({ rating, size = 20, showNumber = false }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
@@ -62,7 +61,6 @@ const UserCommentsScreen = ({ route, navigation }) => {
     }
   }, [userId]);
 
-  // Refrescar datos cuando la pantalla recibe el foco (al regresar de otra pantalla)
   useFocusEffect(
     React.useCallback(() => {
       if (userId) {
@@ -127,8 +125,6 @@ const UserCommentsScreen = ({ route, navigation }) => {
     setRefreshing(false);
   };
 
-  // Combinar comentarios con sus puntuaciones correspondientes
-  // La puntuación debe ser del mismo usuario que hizo el comentario, para el mismo usuario comentado
   const getRatingForComment = (commentUserId) => {
     return ratings.find(r => 
       r.id_usuario === commentUserId && r.id_usuario_puntuado === userId

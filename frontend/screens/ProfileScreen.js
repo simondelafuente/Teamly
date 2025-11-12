@@ -27,7 +27,6 @@ const ProfileScreen = ({ navigation }) => {
     cargarDatosUsuario();
   }, []);
 
-  // Refrescar datos cuando la pantalla recibe el foco (al regresar de editar perfil)
   useFocusEffect(
     React.useCallback(() => {
       cargarDatosUsuario();
@@ -54,10 +53,8 @@ const ProfileScreen = ({ navigation }) => {
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {
-      // En web, usar modal personalizado
       setShowLogoutModal(true);
     } else {
-      // En móvil, usar Alert nativo
       Alert.alert(
         'Cerrar Sesión',
         '¿Estás seguro de que deseas cerrar sesión?',
@@ -81,20 +78,15 @@ const ProfileScreen = ({ navigation }) => {
 
   const ejecutarLogout = async () => {
     try {
-      // Cerrar sesión y limpiar datos
       await authService.logout();
-      
-      // Cerrar modal si está abierto
       setShowLogoutModal(false);
       
-      // Navegar a Login y resetear completamente la navegación
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
       });
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      // Aún así, intentar navegar a Login
       try {
         setShowLogoutModal(false);
         navigation.reset({
@@ -233,7 +225,6 @@ const ProfileScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => {
-              console.log('🔴 Botón de logout presionado');
               handleLogout();
             }}
             activeOpacity={0.7}

@@ -9,7 +9,6 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos (imágenes subidas)
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -25,14 +24,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Manejo de errores 404
 app.use((req, res) => {
   res.status(404).json({
     message: 'Ruta no encontrada'
   });
 });
 
-// Manejo de errores generales
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({

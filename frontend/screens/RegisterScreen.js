@@ -19,14 +19,12 @@ import { COLORS, SIZES } from '../utils/constants';
 import { authService } from '../services/auth';
 import { getImageWithFallback } from '../utils/imageHelper';
 
-// Opciones de pregunta de seguridad
 const SECURITY_QUESTIONS = [
   '¿Cual es el nombre de tu primer mascota?',
   '¿A cual colegio fuiste de niño?',
   '¿Cual es tu videojuego favorito?',
 ];
 
-// URLs de avatares en el servidor
 const getAvatarUrl = (avatarNumber) => {
   const { apiConfig } = require('../config/api');
   const baseUrl = apiConfig.baseURL.replace('/api', '');
@@ -47,7 +45,6 @@ const RegisterScreen = ({ navigation }) => {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // Solicitar permisos para acceder a la galería
   const requestImagePermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -60,7 +57,6 @@ const RegisterScreen = ({ navigation }) => {
     return true;
   };
 
-  // Seleccionar imagen de la galería
   const pickImage = async () => {
     const hasPermission = await requestImagePermission();
     if (!hasPermission) return;
@@ -82,7 +78,6 @@ const RegisterScreen = ({ navigation }) => {
     }
   };
 
-  // Tomar foto con la cámara
   const takePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -111,7 +106,6 @@ const RegisterScreen = ({ navigation }) => {
 
   // Seleccionar avatar predeterminado
   const selectAvatar = (avatarNumber) => {
-    // Guardar la ruta del avatar que estará en el servidor
     if (avatarNumber === 1) {
       setSelectedImage('/uploads/avatars/avatar1.jpg');
     } else if (avatarNumber === 2) {
@@ -122,12 +116,10 @@ const RegisterScreen = ({ navigation }) => {
     setShowAvatarModal(false);
   };
 
-  // Mostrar modal de selección de foto
   const showImageOptions = () => {
     setShowAvatarModal(true);
   };
 
-  // Validar formulario
   const validateForm = () => {
     if (!fullName.trim()) {
       Alert.alert('Error', 'Por favor ingresa tu nombre completo');
@@ -164,13 +156,11 @@ const RegisterScreen = ({ navigation }) => {
     return true;
   };
 
-  // Manejar registro
   const handleRegister = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      // Preparar datos para el registro
       const userData = {
         nombre_completo: fullName.trim(),
         email: email.trim().toLowerCase(),
@@ -180,21 +170,17 @@ const RegisterScreen = ({ navigation }) => {
         foto_perfil: null,
       };
 
-      // Determinar si hay imagen para subir o es un avatar predeterminado
       let imageUri = null;
       if (selectedImage && typeof selectedImage === 'string') {
         if (selectedImage.startsWith('/uploads/avatars/')) {
-          // Es un avatar del servidor, usar la ruta directamente
           userData.foto_perfil = selectedImage;
         } else if (selectedImage.startsWith('file://')) {
-          // Es una imagen seleccionada del dispositivo, subirla
           imageUri = selectedImage;
         }
       }
 
       const response = await authService.register(userData, imageUri);
       if (response.success) {
-        // Limpiar el formulario
         setFullName('');
         setEmail('');
         setPassword('');
@@ -203,7 +189,6 @@ const RegisterScreen = ({ navigation }) => {
         setSecurityAnswer('');
         setSelectedImage(null);
         
-        // Mostrar mensaje de éxito y navegar automáticamente a Login
         Alert.alert(
           'Éxito',
           'Cuenta creada correctamente',
@@ -216,10 +201,9 @@ const RegisterScreen = ({ navigation }) => {
           { cancelable: false }
         );
         
-        // Navegar automáticamente después de 1.5 segundos (incluso si no presiona OK)
         setTimeout(() => {
           navigation.replace('Login');
-        }, 1500);
+        }, 1250);
       }
     } catch (error) {
       Alert.alert('Error', error.message || 'Error al crear la cuenta');

@@ -32,7 +32,6 @@ const GamesNotificationsScreen = ({ navigation }) => {
       
       if (response.success && response.data) {
         setGames(response.data);
-        // Inicializar todas las notificaciones como desactivadas
         const initialNotifications = {};
         response.data.forEach(game => {
           initialNotifications[game.id_actividad] = false;

@@ -40,10 +40,8 @@ function formatDateDisplay(dateString) {
   return `${day}/${month}/${year}`;
 }
 
-// Función para formatear la hora (solo horas y minutos, sin segundos)
 function formatTime(timeString) {
   if (!timeString) return '';
-  // Si viene en formato HH:MM:SS, solo tomar HH:MM
   if (timeString.includes(':')) {
     const parts = timeString.split(':');
     const hours = parts[0].padStart(2, '0');
@@ -61,13 +59,11 @@ function adjustDate(date) {
   return adjustedDate;
 }
 
-// Componente para input de fecha en web
 const WebDateInput = ({ value, onChange, style }) => {
   if (Platform.OS !== 'web') {
     return null;
   }
 
-  // Usar createElement para crear el input HTML nativo en web
   return React.createElement('input', {
     type: 'date',
     value: value,
@@ -90,12 +86,10 @@ const PublicationsScreen = ({ navigation }) => {
   const [publicaciones, setPublicaciones] = useState([]);
   const [actividades, setActividades] = useState([]);
   
-  // Estados para filtros temporales (mientras se configuran)
   const [actividadFiltro, setActividadFiltro] = useState('');
   const [fecha, setFecha] = useState(null);
   const [zona, setZona] = useState('');
   
-  // Estados para filtros aplicados (los que realmente filtran)
   const [actividadFiltroAplicado, setActividadFiltroAplicado] = useState('');
   const [fechaAplicada, setFechaAplicada] = useState(null);
   const [zonaAplicada, setZonaAplicada] = useState('');
@@ -105,13 +99,11 @@ const PublicationsScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   
-  // Estados para dropdowns con búsqueda
   const [showActividadDropdown, setShowActividadDropdown] = useState(false);
   const [showZonaDropdown, setShowZonaDropdown] = useState(false);
   const [actividadSearch, setActividadSearch] = useState('');
   const [zonaSearch, setZonaSearch] = useState('');
 
-  // Zonas disponibles (puedes ajustar según tu necesidad)
   const zonas = [
     'Recoleta',
     'Palermo',
@@ -162,29 +154,25 @@ const PublicationsScreen = ({ navigation }) => {
     cargarActividades();
   }, []);
 
-  // Refrescar publicaciones cuando la pantalla recibe el foco (al regresar de otra pantalla)
   useFocusEffect(
     React.useCallback(() => {
       cargarPublicaciones();
     }, [])
   );
 
-  // Cerrar dropdowns cuando se toque fuera
   useEffect(() => {
     const closeDropdowns = () => {
       setShowActividadDropdown(false);
       setShowZonaDropdown(false);
     };
-    // Los dropdowns se cerrarán cuando se seleccione una opción o se toque fuera
   }, []);
 
   // Aplicar filtros
   const aplicarFiltros = () => {
-    // Copiar los filtros temporales a los filtros aplicados
     setActividadFiltroAplicado(actividadFiltro);
     setFechaAplicada(fecha);
     setZonaAplicada(zona);
-    // Ocultar los filtros después de aplicarlos
+
     setShowFilters(false);
   };
 
@@ -577,7 +565,6 @@ const PublicationsScreen = ({ navigation }) => {
                     </Text>
                   </View>
                 ) : (
-                  // Badge temporal para debug (solo en desarrollo)
                   __DEV__ && (
                     <View style={[styles.activityTypeBadge, { backgroundColor: '#FF0000' }]}>
                       <Text style={styles.activityTypeText}>NO TIPO</Text>

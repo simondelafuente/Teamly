@@ -38,7 +38,6 @@ const MessagesScreen = ({ route, navigation }) => {
     try {
       setLoading(true);
       
-      // Obtener el usuario actual
       const userData = await authService.getUserData();
       if (!userData || !userData.id_usuario) {
         Alert.alert('Error', 'No se pudo obtener la información del usuario');
@@ -46,11 +45,9 @@ const MessagesScreen = ({ route, navigation }) => {
         return;
       }
 
-      // Obtener la conversación entre el usuario actual y el otro usuario
       const response = await apiRequest(`/mensajes/conversacion/${userData.id_usuario}/${userId}`);
       
       if (response.success && response.data) {
-        // Mapear los mensajes del backend al formato esperado por el frontend
         const mensajesMapeados = response.data.map((mensaje) => {
           const isSent = mensaje.id_emisor === userData.id_usuario;
           const fechaISO = mensaje.fecha_envio;
@@ -69,14 +66,12 @@ const MessagesScreen = ({ route, navigation }) => {
         
         setMessages(mensajesMapeados);
         
-        // Desplazar al final cuando se cargan los mensajes
         if (mensajesMapeados.length > 0) {
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }, 100);
         }
       } else {
-        // Si no hay mensajes pero hay un mensaje inicial, mostrarlo
         if (initialMessage) {
           const messageDate = initialMessage.fecha 
             ? formatMessageDateFromString(initialMessage.fecha)
@@ -95,7 +90,6 @@ const MessagesScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Error loading messages:', error);
-      // Si hay error pero hay un mensaje inicial, mostrarlo
       if (initialMessage) {
         const messageDate = initialMessage.fecha 
           ? formatMessageDateFromString(initialMessage.fecha)
@@ -117,7 +111,6 @@ const MessagesScreen = ({ route, navigation }) => {
     }
   };
 
-  // Función para formatear la fecha desde un string ISO
   const formatMessageDateFromString = (dateString) => {
     if (!dateString) return formatMessageDate();
     try {
@@ -130,7 +123,6 @@ const MessagesScreen = ({ route, navigation }) => {
     }
   };
 
-  // Función para formatear la fecha y hora
   const formatMessageDate = () => {
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, '0');
@@ -144,15 +136,13 @@ const MessagesScreen = ({ route, navigation }) => {
     }
 
     const messageText = newMessage.trim();
-    
-    // Obtener el usuario actual
+  
     const userData = await authService.getUserData();
     if (!userData || !userData.id_usuario) {
       Alert.alert('Error', 'No se pudo obtener la información del usuario');
       return;
     }
 
-    // Crear mensaje temporal para mostrar inmediatamente (optimistic update)
     const tempMessage = {
       id: `temp_${Date.now()}`,
       texto: messageText,
@@ -164,16 +154,13 @@ const MessagesScreen = ({ route, navigation }) => {
     try {
       setSending(true);
       
-      // Agregar el mensaje inmediatamente a la lista
       setMessages(prevMessages => [...prevMessages, tempMessage]);
       setNewMessage('');
       
-      // Desplazar el scroll al final para ver el nuevo mensaje
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
 
-      // Enviar el mensaje a la API
       const response = await apiRequest('/mensajes', {
         method: 'POST',
         body: {
@@ -184,7 +171,6 @@ const MessagesScreen = ({ route, navigation }) => {
       });
 
       if (response.success && response.data) {
-        // Reemplazar el mensaje temporal con el mensaje real del servidor
         const fechaISO = response.data.fecha_envio;
         const fechaFormateada = fechaISO 
           ? formatMessageDateFromString(fechaISO)
@@ -204,7 +190,6 @@ const MessagesScreen = ({ route, navigation }) => {
           )
         );
       } else {
-        // Si falla, marcar como enviado de todas formas (el servidor puede haberlo guardado)
         setMessages(prevMessages =>
           prevMessages.map(msg =>
             msg.id === tempMessage.id
@@ -217,7 +202,6 @@ const MessagesScreen = ({ route, navigation }) => {
       setSending(false);
     } catch (error) {
       console.error('Error sending message:', error);
-      // Si hay error, remover el mensaje temporal
       setMessages(prevMessages =>
         prevMessages.filter(msg => msg.id !== tempMessage.id)
       );

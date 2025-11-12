@@ -55,7 +55,6 @@ const MessagesListScreen = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // Obtener el usuario actual
       const userData = await authService.getUserData();
       if (!userData || !userData.id_usuario) {
         Alert.alert('Error', 'No se pudo obtener la información del usuario');
@@ -63,10 +62,9 @@ const MessagesListScreen = ({ navigation }) => {
         return;
       }
 
-      // Obtener mensajes recibidos desde la API
       const response = await apiRequest(`/mensajes/receptor/${userData.id_usuario}`);
-      
-      // Mensajes de ejemplo con las fotos de los avatares
+
+      //MENSAJES EJEMPLO BORRAR DESPUES DE LA DATA ENTRY 
       const mensajesEjemplo = [
         {
           id: 'ejemplo_1',
@@ -82,7 +80,7 @@ const MessagesListScreen = ({ navigation }) => {
           remitente_id: 'ejemplo_maria',
           remitente_foto: getImageUrl('/uploads/avatars/maria_garcia.jpg'),
           mensaje: '¿A qué hora es el partido de básquet? Me gustaría participar.',
-          fecha: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // Hace 2 horas
+          fecha: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), 
         },
         {
           id: 'ejemplo_3',
@@ -90,19 +88,16 @@ const MessagesListScreen = ({ navigation }) => {
           remitente_id: 'ejemplo_carlos',
           remitente_foto: getImageUrl('/uploads/avatars/carlos_lopez.jpg'),
           mensaje: 'Perfecto, me apunto al torneo de Rocket League. ¿Dónde nos encontramos?',
-          fecha: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Ayer
+          fecha: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), 
         },
       ];
       
       if (response.success && response.data && response.data.length > 0) {
-        // Mapear los mensajes del backend al formato esperado por el frontend
-        // Agrupar mensajes por remitente para mostrar solo el último mensaje de cada conversación
         const mensajesAgrupados = {};
         
         response.data.forEach((mensaje) => {
           const remitenteId = mensaje.id_emisor;
           
-          // Si no existe o si este mensaje es más reciente, actualizar
           if (!mensajesAgrupados[remitenteId] || 
               new Date(mensaje.fecha_envio) > new Date(mensajesAgrupados[remitenteId].fecha)) {
             mensajesAgrupados[remitenteId] = {
@@ -124,7 +119,6 @@ const MessagesListScreen = ({ navigation }) => {
         // Combinar mensajes reales con los de ejemplo
         const todosLosMensajes = [...mensajesLista, ...mensajesEjemplo];
         
-        // Ordenar todos por fecha (más recientes primero)
         todosLosMensajes.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
         
         setMessages(todosLosMensajes);
@@ -134,7 +128,7 @@ const MessagesListScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error loading messages:', error);
-      // En caso de error, mostrar los mensajes de ejemplo
+      // En caso de error, mostrar mensajes de ejemplo
       const mensajesEjemplo = [
         {
           id: 'ejemplo_1',
@@ -168,7 +162,6 @@ const MessagesListScreen = ({ navigation }) => {
   };
 
   const handleMessagePress = (message) => {
-    // Navegar a la pantalla de conversación con el remitente
     navigation.navigate('Messages', {
       userId: message.remitente_id,
       userName: message.remitente,

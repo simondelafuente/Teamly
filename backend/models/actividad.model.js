@@ -18,22 +18,15 @@ class Actividad {
   // Obtener actividades por tipo
   static async findByTipo(tipo) {
     try {
-      // Normalizar el tipo: primera letra mayúscula, resto minúsculas
       const tipoNormalizado = tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase();
-      
-      // Generar variaciones posibles (singular y plural)
       const variaciones = [tipoNormalizado];
       
-      // Si termina en 's', también buscar sin la 's' (plural -> singular)
       if (tipoNormalizado.endsWith('s')) {
         variaciones.push(tipoNormalizado.slice(0, -1));
       } else {
-        // Si no termina en 's', también buscar con 's' (singular -> plural)
         variaciones.push(tipoNormalizado + 's');
       }
       
-      // Buscar todas las variaciones usando OR en una sola query
-      // Esto es más eficiente y asegura que encontremos todos los resultados
       const conditions = variaciones.map((_, index) => `tipo ILIKE $${index + 1}`).join(' OR ');
       const result = await pool.query(
         `SELECT * FROM ${this.tableName} 

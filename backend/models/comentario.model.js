@@ -172,7 +172,6 @@ class Comentario {
   }
 }
 
-//Obtener comentarios por publicación
 
 module.exports = Comentario;
 

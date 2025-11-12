@@ -58,7 +58,6 @@ const UserPublicationsScreen = ({ route, navigation }) => {
     }
   }, [userId]);
 
-  // Refrescar publicaciones cuando la pantalla recibe el foco (al regresar de otra pantalla)
   useFocusEffect(
     React.useCallback(() => {
       if (userId) {
@@ -95,10 +94,8 @@ const UserPublicationsScreen = ({ route, navigation }) => {
     setPublicacionToDelete({ id: publicacionId, titulo });
     
     if (Platform.OS === 'web') {
-      // En web, usar modal personalizado
       setShowDeleteModal(true);
     } else {
-      // En móvil, usar Alert nativo (igual que en AddCommentScreen)
       Alert.alert(
         'Eliminar Publicación',
         '¿Estás seguro que deseas eliminar la publicación?',
@@ -134,7 +131,6 @@ const UserPublicationsScreen = ({ route, navigation }) => {
         Alert.alert('Error', response.message || 'No se pudo eliminar la publicación');
       }
     } catch (error) {
-      console.error('❌ Error al eliminar publicación:', error);
       Alert.alert('Error', error.message || 'No se pudo eliminar la publicación');
     } finally {
       setLoading(false);

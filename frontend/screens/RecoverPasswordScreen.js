@@ -16,7 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../utils/constants';
 import { apiRequest } from '../config/api';
 
-// Opciones de pregunta de seguridad (deben coincidir con RegisterScreen)
 const SECURITY_QUESTIONS = [
   '¿Cual es el nombre de tu primer mascota?',
   '¿A cual colegio fuiste de niño?',
@@ -33,13 +32,12 @@ const RecoverPasswordScreen = ({ navigation }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1); // 1: Verificar credenciales, 2: Nueva contraseña
+  const [step, setStep] = useState(1);
   const [verifiedEmail, setVerifiedEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const handleVerify = async () => {
-    // Limpiar mensajes de error anteriores
     setErrorMessage('');
 
     if (!email.trim()) {
@@ -75,7 +73,6 @@ const RecoverPasswordScreen = ({ navigation }) => {
         setErrorMessage('');
         setStep(2);
       } else {
-        // Mostrar mensaje de error específico
         if (response.message && response.message.includes('no encontrado')) {
           setErrorMessage('El email ingresado no está registrado');
         } else if (response.message && response.message.includes('incorrectas')) {
@@ -85,7 +82,6 @@ const RecoverPasswordScreen = ({ navigation }) => {
         }
       }
     } catch (error) {
-      // Manejar errores de red o del servidor
       if (error.status === 404 || (error.message && error.message.includes('no encontrado'))) {
         setErrorMessage('El email ingresado no está registrado');
       } else if (error.status === 401 || (error.message && error.message.includes('incorrectas'))) {
@@ -99,7 +95,6 @@ const RecoverPasswordScreen = ({ navigation }) => {
   };
 
   const handleResetPassword = async () => {
-    // Limpiar mensajes de error anteriores
     setErrorMessage('');
 
     if (!newPassword.trim()) {
@@ -126,19 +121,16 @@ const RecoverPasswordScreen = ({ navigation }) => {
       });
 
       if (response.success) {
-        // Mostrar mensaje de éxito breve
         setShowSuccessMessage(true);
         setErrorMessage('');
         
-        // Después de 2 segundos, redirigir al login
         setTimeout(() => {
           setShowSuccessMessage(false);
-          // Navegar al login y resetear el stack
           navigation.reset({
             index: 0,
             routes: [{ name: 'Login' }],
           });
-        }, 2000);
+        }, 1500);
       } else {
         setErrorMessage(response.message || 'Error al actualizar la contraseña');
       }

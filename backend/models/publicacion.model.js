@@ -88,7 +88,6 @@ class Publicacion {
       const { titulo, direccion, zona, vacantes_disponibles, fecha, hora, id_usuario, id_actividad } = data;
       let createdPublication;
       
-      // Intentar insertar con zona y vacantes_disponibles
       try {
         const result = await pool.query(
           `INSERT INTO ${this.tableName} (titulo, direccion, zona, vacantes_disponibles, fecha, hora, id_usuario, id_actividad) 
@@ -98,10 +97,8 @@ class Publicacion {
         );
         createdPublication = result.rows[0];
       } catch (error) {
-        // Si alguna columna no existe, intentar sin ella
         if (error.message.includes('zona') || error.message.includes('vacantes_disponibles')) {
           try {
-            // Intentar con zona pero sin vacantes
             if (!error.message.includes('zona')) {
               const { titulo, direccion, zona, fecha, hora, id_usuario, id_actividad } = data;
               const result = await pool.query(
@@ -112,7 +109,6 @@ class Publicacion {
               );
               createdPublication = result.rows[0];
             } else {
-              // Intentar sin zona ni vacantes
               const { titulo, direccion, fecha, hora, id_usuario, id_actividad } = data;
               const result = await pool.query(
                 `INSERT INTO ${this.tableName} (titulo, direccion, fecha, hora, id_usuario, id_actividad) 
