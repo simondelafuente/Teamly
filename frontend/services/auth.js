@@ -79,9 +79,36 @@ export const authService = {
 
   isAuthenticated: async () => {
     try {
-      const userData = await AsyncStorage.getItem(USER_DATA_KEY);
-      return userData !== null;
+      const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      
+      // Si no hay token, no está autenticado
+      if (!token) {
+        return false;
+      }
+
+      // Verificar token con el servidor
+      try {
+        const response = await apiRequest('/usuarios/verify-token', {
+          method: 'GET',
+        });
+
+        if (response.success && response.data) {
+          // Actualizar datos del usuario con la respuesta del servidor
+          await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(response.data));
+          return true;
+        }
+        
+        return false;
+      } catch (error) {
+        // Si el token es inválido, limpiar almacenamiento
+        if (error.status === 401) {
+          await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+          await AsyncStorage.removeItem(USER_DATA_KEY);
+        }
+        return false;
+      }
     } catch (error) {
+      console.error('Error al verificar autenticación:', error);
       return false;
     }
   },

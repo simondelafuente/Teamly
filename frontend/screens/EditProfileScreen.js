@@ -435,6 +435,20 @@ const EditProfileScreen = ({ navigation, route }) => {
                 />
                 <Text style={styles.avatarLabel}>Avatar 3</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.avatarOption,
+                  selectedImage && selectedImage.includes('avatar4') && styles.avatarSelected,
+                ]}
+                onPress={() => selectAvatar(4)}
+              >
+                <Image 
+                  source={{ uri: getAvatarUrl(4) }} 
+                  style={styles.avatarPreview}
+                  defaultSource={require('../assets/images/logo.png')}
+                />
+                <Text style={styles.avatarLabel}>Avatar 4</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Botón para cargar foto desde dispositivo */}

@@ -63,34 +63,6 @@ const MessagesListScreen = ({ navigation }) => {
       }
 
       const response = await apiRequest(`/mensajes/receptor/${userData.id_usuario}`);
-
-      //MENSAJES EJEMPLO BORRAR DESPUES DE LA DATA ENTRY 
-      const mensajesEjemplo = [
-        {
-          id: 'ejemplo_1',
-          remitente: 'Juan Pérez',
-          remitente_id: 'ejemplo_juan',
-          remitente_foto: getImageUrl('/uploads/avatars/juan_perez.jpg'),
-          mensaje: 'Hola! Me interesa unirme a tu publicación de fútbol. ¿Todavía hay vacantes?',
-          fecha: new Date().toISOString(),
-        },
-        {
-          id: 'ejemplo_2',
-          remitente: 'María García',
-          remitente_id: 'ejemplo_maria',
-          remitente_foto: getImageUrl('/uploads/avatars/maria_garcia.jpg'),
-          mensaje: '¿A qué hora es el partido de básquet? Me gustaría participar.',
-          fecha: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), 
-        },
-        {
-          id: 'ejemplo_3',
-          remitente: 'Carlos López',
-          remitente_id: 'ejemplo_carlos',
-          remitente_foto: getImageUrl('/uploads/avatars/carlos_lopez.jpg'),
-          mensaje: 'Perfecto, me apunto al torneo de Rocket League. ¿Dónde nos encontramos?',
-          fecha: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), 
-        },
-      ];
       
       if (response.success && response.data && response.data.length > 0) {
         const mensajesAgrupados = {};
@@ -116,46 +88,13 @@ const MessagesListScreen = ({ navigation }) => {
           (a, b) => new Date(b.fecha) - new Date(a.fecha)
         );
         
-        // Combinar mensajes reales con los de ejemplo
-        const todosLosMensajes = [...mensajesLista, ...mensajesEjemplo];
-        
-        todosLosMensajes.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        
-        setMessages(todosLosMensajes);
+        setMessages(mensajesLista);
       } else {
-        // Si no hay mensajes reales, mostrar solo los de ejemplo
-        setMessages(mensajesEjemplo);
+        setMessages([]);
       }
     } catch (error) {
       console.error('Error loading messages:', error);
-      // En caso de error, mostrar mensajes de ejemplo
-      const mensajesEjemplo = [
-        {
-          id: 'ejemplo_1',
-          remitente: 'Juan Pérez',
-          remitente_id: 'ejemplo_juan',
-          remitente_foto: getImageUrl('/uploads/avatars/juan_perez.jpg'),
-          mensaje: 'Hola! Me interesa unirme a tu publicación de fútbol. ¿Todavía hay vacantes?',
-          fecha: new Date().toISOString(),
-        },
-        {
-          id: 'ejemplo_2',
-          remitente: 'María García',
-          remitente_id: 'ejemplo_maria',
-          remitente_foto: getImageUrl('/uploads/avatars/maria_garcia.jpg'),
-          mensaje: '¿A qué hora es el partido de básquet? Me gustaría participar.',
-          fecha: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'ejemplo_3',
-          remitente: 'Carlos López',
-          remitente_id: 'ejemplo_carlos',
-          remitente_foto: getImageUrl('/uploads/avatars/carlos_lopez.jpg'),
-          mensaje: 'Perfecto, me apunto al torneo de Rocket League. ¿Dónde nos encontramos?',
-          fecha: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-      setMessages(mensajesEjemplo);
+      setMessages([]);
     } finally {
       setLoading(false);
     }

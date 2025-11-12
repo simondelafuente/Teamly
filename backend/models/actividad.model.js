@@ -58,15 +58,39 @@ class Actividad {
   // Crear una nueva actividad
   static async create(data) {
     try {
-      const { nombre_actividad, imagen } = data;
-      const result = await pool.query(
-        `INSERT INTO ${this.tableName} (nombre_actividad, imagen) 
-         VALUES ($1, $2) 
-         RETURNING *`,
-        [nombre_actividad, imagen]
-      );
-      return result.rows[0];
+      const { nombre_actividad, imagen, tipo } = data;
+      
+      // Si se proporciona tipo, incluirlo en la inserción
+      if (tipo !== undefined) {
+        const result = await pool.query(
+          `INSERT INTO ${this.tableName} (nombre_actividad, imagen, tipo) 
+           VALUES ($1, $2, $3) 
+           RETURNING *`,
+          [nombre_actividad, imagen, tipo]
+        );
+        return result.rows[0];
+      } else {
+        // Si no se proporciona tipo, crear sin él
+        const result = await pool.query(
+          `INSERT INTO ${this.tableName} (nombre_actividad, imagen) 
+           VALUES ($1, $2) 
+           RETURNING *`,
+          [nombre_actividad, imagen]
+        );
+        return result.rows[0];
+      }
     } catch (error) {
+      // Si el campo tipo no existe, intentar sin él
+      if (error.message.includes('tipo') || error.message.includes('column')) {
+        const { nombre_actividad, imagen } = data;
+        const result = await pool.query(
+          `INSERT INTO ${this.tableName} (nombre_actividad, imagen) 
+           VALUES ($1, $2) 
+           RETURNING *`,
+          [nombre_actividad, imagen]
+        );
+        return result.rows[0];
+      }
       throw new Error(`Error al crear actividad: ${error.message}`);
     }
   }
@@ -74,7 +98,7 @@ class Actividad {
   // Actualizar una actividad
   static async update(id, data) {
     try {
-      const { nombre_actividad, imagen } = data;
+      const { nombre_actividad, imagen, tipo } = data;
       
       const updates = [];
       const values = [];
@@ -87,6 +111,10 @@ class Actividad {
       if (imagen !== undefined) {
         updates.push(`imagen = $${paramCount++}`);
         values.push(imagen);
+      }
+      if (tipo !== undefined) {
+        updates.push(`tipo = $${paramCount++}`);
+        values.push(tipo);
       }
 
       if (updates.length === 0) {
@@ -104,6 +132,37 @@ class Actividad {
       );
       return result.rows[0] || null;
     } catch (error) {
+      // Si el campo tipo no existe, intentar sin él
+      if (error.message.includes('tipo') || error.message.includes('column')) {
+        const { nombre_actividad, imagen } = data;
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (nombre_actividad !== undefined) {
+          updates.push(`nombre_actividad = $${paramCount++}`);
+          values.push(nombre_actividad);
+        }
+        if (imagen !== undefined) {
+          updates.push(`imagen = $${paramCount++}`);
+          values.push(imagen);
+        }
+
+        if (updates.length === 0) {
+          return await this.findById(id);
+        }
+
+        values.push(id);
+
+        const result = await pool.query(
+          `UPDATE ${this.tableName} 
+           SET ${updates.join(', ')} 
+           WHERE id_actividad = $${paramCount} 
+           RETURNING *`,
+          values
+        );
+        return result.rows[0] || null;
+      }
       throw new Error(`Error al actualizar actividad: ${error.message}`);
     }
   }

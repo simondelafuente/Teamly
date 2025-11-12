@@ -194,13 +194,21 @@ exports.login = async (req, res, next) => {
       });
     }
     
+    // Generar token JWT
+    const { generateToken } = require('../utils/jwt');
+    const token = generateToken({
+      id_usuario: usuario.id_usuario,
+      email: usuario.email
+    });
+    
     // Retornar datos del usuario sin la contraseña
     const { contrasena: _, ...usuarioSinPassword } = usuario;
     
     res.json({
       success: true,
       message: 'Login exitoso',
-      data: usuarioSinPassword
+      data: usuarioSinPassword,
+      token: token
     });
   } catch (error) {
     next(error);
@@ -298,6 +306,50 @@ exports.resetPassword = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+// Verificar token JWT
+exports.verifyToken = async (req, res, next) => {
+  try {
+    const { verifyToken, extractTokenFromHeader } = require('../utils/jwt');
+    
+    // Extraer token del header
+    const token = extractTokenFromHeader(req.headers);
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token no proporcionado'
+      });
+    }
+
+    // Verificar token
+    const decoded = verifyToken(token);
+    
+    // Obtener datos actualizados del usuario
+    const usuario = await Usuario.findById(decoded.id_usuario);
+    
+    if (!usuario) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
+    }
+
+    // Retornar datos del usuario sin la contraseña
+    const { contrasena: _, ...usuarioSinPassword } = usuario;
+    
+    res.json({
+      success: true,
+      message: 'Token válido',
+      data: usuarioSinPassword
+    });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: error.message || 'Token inválido o expirado'
+    });
   }
 };
 
