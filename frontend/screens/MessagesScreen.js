@@ -249,9 +249,6 @@ const MessagesScreen = ({ route, navigation }) => {
             <Text style={styles.emptyText}>
               No hay mensajes disponibles
             </Text>
-            <Text style={styles.emptySubtext}>
-              Esta funcionalidad estará disponible próximamente
-            </Text>
           </View>
         ) : (
           messages.map((message) => (

@@ -12,6 +12,8 @@ import {
   TextInput,
   Modal,
   FlatList,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect } from '@react-navigation/native';
@@ -95,6 +97,7 @@ const PublicationsScreen = ({ navigation }) => {
   const [zonaAplicada, setZonaAplicada] = useState('');
   
   const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
+  const [tempFecha, setTempFecha] = useState(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -380,7 +383,10 @@ const PublicationsScreen = ({ navigation }) => {
           ) : (
             <>
               <TouchableOpacity
-                onPress={() => setMostrarDatePicker(true)}
+                onPress={() => {
+                  setTempFecha(fecha || new Date());
+                  setMostrarDatePicker(true);
+                }}
                 style={styles.dateButton}
               >
                 <Ionicons name="calendar-outline" size={20} color={COLORS.primaryBlue} />
@@ -397,25 +403,127 @@ const PublicationsScreen = ({ navigation }) => {
                 )}
               </TouchableOpacity>
 
-              {mostrarDatePicker && (
-                <DateTimePicker
-                  value={fecha || new Date()}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(event, selectedDate) => {
-                    if (Platform.OS === 'android') {
-                      setMostrarDatePicker(false);
-                    }
-                    if (selectedDate) {
-                      setFecha(adjustDate(selectedDate));
-                      if (Platform.OS === 'ios') {
-                        setMostrarDatePicker(false);
-                      }
-                    } else if (Platform.OS === 'android') {
-                      setMostrarDatePicker(false);
-                    }
+              {mostrarDatePicker && Platform.OS === 'ios' && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={mostrarDatePicker}
+                  onRequestClose={() => {
+                    setMostrarDatePicker(false);
+                    setTempFecha(null);
                   }}
-                />
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                          style={styles.modalCancelButton}
+                        >
+                          <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Seleccionar Fecha</Text>
+                        <View style={styles.modalConfirmButton} />
+                      </View>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          value={tempFecha || new Date()}
+                          mode="date"
+                          display="spinner"
+                          onChange={(event, selectedDate) => {
+                            if (selectedDate) {
+                              setTempFecha(selectedDate);
+                            }
+                          }}
+                          style={styles.picker}
+                          textColor={COLORS.textDark}
+                        />
+                      </View>
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonConfirm]}
+                          onPress={() => {
+                            if (tempFecha) {
+                              setFecha(adjustDate(tempFecha));
+                            }
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+              {mostrarDatePicker && Platform.OS === 'android' && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={mostrarDatePicker}
+                  onRequestClose={() => {
+                    setMostrarDatePicker(false);
+                    setTempFecha(null);
+                  }}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Seleccionar Fecha</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                          style={styles.modalCloseButton}
+                        >
+                          <Ionicons name="close" size={24} color={COLORS.textDark} />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          value={tempFecha || new Date()}
+                          mode="date"
+                          display="spinner"
+                          onChange={(event, selectedDate) => {
+                            if (selectedDate) {
+                              setTempFecha(selectedDate);
+                            }
+                          }}
+                          style={styles.picker}
+                          textColor={COLORS.textDark}
+                        />
+                      </View>
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonCancel]}
+                          onPress={() => {
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonConfirm]}
+                          onPress={() => {
+                            if (tempFecha) {
+                              setFecha(adjustDate(tempFecha));
+                            }
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
               )}
             </>
           )}
@@ -526,13 +634,14 @@ const PublicationsScreen = ({ navigation }) => {
       )}
 
       {/* Lista de Publicaciones */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
         {loading && publicaciones.length === 0 ? (
           <View style={styles.centerContainer}>
             <Text style={styles.loadingText}>Cargando publicaciones...</Text>
@@ -629,7 +738,8 @@ const PublicationsScreen = ({ navigation }) => {
             </TouchableOpacity>
           ))
         )}
-      </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
 
       {/* Footer de Navegación */}
       <View style={styles.footerContainer}>
@@ -995,6 +1105,97 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     padding: SIZES.padding / 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    maxHeight: '70%',
+    minHeight: Platform.OS === 'ios' ? 300 : 250,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding * 2,
+    paddingVertical: SIZES.padding,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: SIZES.large,
+    fontWeight: 'bold',
+    color: COLORS.textDark,
+    flex: 1,
+    textAlign: 'center',
+  },
+  modalCloseButton: {
+    padding: SIZES.padding / 2,
+  },
+  modalCancelButton: {
+    padding: SIZES.padding / 2,
+    minWidth: 80,
+  },
+  modalConfirmButton: {
+    padding: SIZES.padding / 2,
+    minWidth: 80,
+    alignItems: 'flex-end',
+  },
+  pickerContainer: {
+    paddingVertical: SIZES.padding,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  picker: {
+    width: '100%',
+    height: Platform.OS === 'ios' ? 216 : 180,
+    backgroundColor: COLORS.background,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: SIZES.padding * 2,
+    paddingTop: SIZES.padding,
+    paddingBottom: SIZES.padding,
+    gap: SIZES.margin,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: SIZES.padding + 4,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  modalButtonCancel: {
+    backgroundColor: COLORS.inputBackground,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  modalButtonConfirm: {
+    backgroundColor: COLORS.primaryBlue,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalButtonCancelText: {
+    fontSize: SIZES.medium,
+    fontWeight: '600',
+    color: COLORS.textDark,
+  },
+  modalButtonConfirmText: {
+    fontSize: SIZES.medium,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

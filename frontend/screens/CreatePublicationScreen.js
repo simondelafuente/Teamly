@@ -8,6 +8,9 @@ import {
   TextInput,
   Platform,
   Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -121,6 +124,8 @@ const CreatePublicationScreen = ({ navigation, route }) => {
   const [zonaSearch, setZonaSearch] = useState('');
   const [mostrarDatePicker, setMostrarDatePicker] = useState(false);
   const [mostrarTimePicker, setMostrarTimePicker] = useState(false);
+  const [tempFecha, setTempFecha] = useState(null);
+  const [tempHora, setTempHora] = useState(null);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState(null);
 
@@ -312,11 +317,12 @@ const CreatePublicationScreen = ({ navigation, route }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Campo Título */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Título</Text>
@@ -561,7 +567,10 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           ) : (
             <>
               <TouchableOpacity
-                onPress={() => setMostrarDatePicker(true)}
+                onPress={() => {
+                  setTempFecha(fecha || new Date());
+                  setMostrarDatePicker(true);
+                }}
                 style={styles.dateButton}
               >
                 <Ionicons name="calendar-outline" size={20} color={COLORS.primaryBlue} />
@@ -569,26 +578,135 @@ const CreatePublicationScreen = ({ navigation, route }) => {
                   {fecha ? formatDate(fecha) : 'Selecciona una fecha'}
                 </Text>
               </TouchableOpacity>
-              {mostrarDatePicker && (
-                <DateTimePicker
-                  value={fecha || new Date()}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  minimumDate={new Date()}
-                  onChange={(event, selectedDate) => {
-                    if (Platform.OS === 'android') {
-                      setMostrarDatePicker(false);
-                    }
-                    if (selectedDate) {
-                      setFecha(adjustDate(selectedDate));
-                      if (Platform.OS === 'ios') {
-                        setMostrarDatePicker(false);
-                      }
-                    } else if (Platform.OS === 'android') {
-                      setMostrarDatePicker(false);
-                    }
+              {mostrarDatePicker && Platform.OS === 'ios' && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={mostrarDatePicker}
+                  onRequestClose={() => {
+                    setMostrarDatePicker(false);
+                    setTempFecha(null);
                   }}
-                />
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                          style={styles.modalCancelButton}
+                        >
+                          <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Seleccionar Fecha</Text>
+                        <View style={styles.modalConfirmButton} />
+                      </View>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          value={tempFecha || new Date()}
+                          mode="date"
+                          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                          minimumDate={new Date()}
+                          onChange={(event, selectedDate) => {
+                            if (Platform.OS === 'ios') {
+                              if (selectedDate) {
+                                setTempFecha(selectedDate);
+                              }
+                            } else {
+                              if (selectedDate) {
+                                setTempFecha(selectedDate);
+                              }
+                            }
+                          }}
+                          style={styles.picker}
+                          textColor={COLORS.textDark}
+                        />
+                      </View>
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonConfirm]}
+                          onPress={() => {
+                            if (tempFecha) {
+                              setFecha(adjustDate(tempFecha));
+                            }
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+              {mostrarDatePicker && Platform.OS === 'android' && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={mostrarDatePicker}
+                  onRequestClose={() => {
+                    setMostrarDatePicker(false);
+                    setTempFecha(null);
+                  }}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Seleccionar Fecha</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                          style={styles.modalCloseButton}
+                        >
+                          <Ionicons name="close" size={24} color={COLORS.textDark} />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          value={tempFecha || new Date()}
+                          mode="date"
+                          display="spinner"
+                          minimumDate={new Date()}
+                          onChange={(event, selectedDate) => {
+                            if (selectedDate) {
+                              setTempFecha(selectedDate);
+                            }
+                          }}
+                          style={styles.picker}
+                          textColor={COLORS.textDark}
+                        />
+                      </View>
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonCancel]}
+                          onPress={() => {
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonConfirm]}
+                          onPress={() => {
+                            if (tempFecha) {
+                              setFecha(adjustDate(tempFecha));
+                            }
+                            setMostrarDatePicker(false);
+                            setTempFecha(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
               )}
             </>
           )}
@@ -624,7 +742,10 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           ) : (
             <>
               <TouchableOpacity
-                onPress={() => setMostrarTimePicker(true)}
+                onPress={() => {
+                  setTempHora(hora || new Date());
+                  setMostrarTimePicker(true);
+                }}
                 style={styles.dateButton}
               >
                 <Ionicons name="time-outline" size={20} color={COLORS.primaryBlue} />
@@ -636,25 +757,135 @@ const CreatePublicationScreen = ({ navigation, route }) => {
                     : 'Selecciona una hora'}
                 </Text>
               </TouchableOpacity>
-              {mostrarTimePicker && (
-                <DateTimePicker
-                  value={hora || new Date()}
-                  mode="time"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={(event, selectedTime) => {
-                    if (Platform.OS === 'android') {
-                      setMostrarTimePicker(false);
-                    }
-                    if (selectedTime) {
-                      setHora(selectedTime);
-                      if (Platform.OS === 'ios') {
-                        setMostrarTimePicker(false);
-                      }
-                    } else if (Platform.OS === 'android') {
-                      setMostrarTimePicker(false);
-                    }
+              {mostrarTimePicker && Platform.OS === 'ios' && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={mostrarTimePicker}
+                  onRequestClose={() => {
+                    setMostrarTimePicker(false);
+                    setTempHora(null);
                   }}
-                />
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMostrarTimePicker(false);
+                            setTempHora(null);
+                          }}
+                          style={styles.modalCancelButton}
+                        >
+                          <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Seleccionar Hora</Text>
+                        <View style={styles.modalConfirmButton} />
+                      </View>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          value={tempHora || new Date()}
+                          mode="time"
+                          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                          is24Hour={true}
+                          onChange={(event, selectedTime) => {
+                            if (Platform.OS === 'ios') {
+                              if (selectedTime) {
+                                setTempHora(selectedTime);
+                              }
+                            } else {
+                              if (selectedTime) {
+                                setTempHora(selectedTime);
+                              }
+                            }
+                          }}
+                          style={styles.picker}
+                          textColor={COLORS.textDark}
+                        />
+                      </View>
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonConfirm]}
+                          onPress={() => {
+                            if (tempHora) {
+                              setHora(tempHora);
+                            }
+                            setMostrarTimePicker(false);
+                            setTempHora(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              )}
+              {mostrarTimePicker && Platform.OS === 'android' && (
+                <Modal
+                  transparent={true}
+                  animationType="slide"
+                  visible={mostrarTimePicker}
+                  onRequestClose={() => {
+                    setMostrarTimePicker(false);
+                    setTempHora(null);
+                  }}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                      <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Seleccionar Hora</Text>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setMostrarTimePicker(false);
+                            setTempHora(null);
+                          }}
+                          style={styles.modalCloseButton}
+                        >
+                          <Ionicons name="close" size={24} color={COLORS.textDark} />
+                        </TouchableOpacity>
+                      </View>
+                      <View style={styles.pickerContainer}>
+                        <DateTimePicker
+                          value={tempHora || new Date()}
+                          mode="time"
+                          display="spinner"
+                          is24Hour={true}
+                          onChange={(event, selectedTime) => {
+                            if (selectedTime) {
+                              setTempHora(selectedTime);
+                            }
+                          }}
+                          style={styles.picker}
+                          textColor={COLORS.textDark}
+                        />
+                      </View>
+                      <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonCancel]}
+                          onPress={() => {
+                            setMostrarTimePicker(false);
+                            setTempHora(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.modalButton, styles.modalButtonConfirm]}
+                          onPress={() => {
+                            if (tempHora) {
+                              setHora(tempHora);
+                            }
+                            setMostrarTimePicker(false);
+                            setTempHora(null);
+                          }}
+                        >
+                          <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
               )}
             </>
           )}
@@ -672,7 +903,8 @@ const CreatePublicationScreen = ({ navigation, route }) => {
               : (isEditMode ? 'Actualizar Publicación' : 'Crear Publicación')}
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
 
       {/* Footer de Navegación */}
       <View style={styles.footerContainer}>
@@ -896,6 +1128,97 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     padding: SIZES.padding / 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    maxHeight: '70%',
+    minHeight: Platform.OS === 'ios' ? 300 : 250,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SIZES.padding * 2,
+    paddingVertical: SIZES.padding,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  modalTitle: {
+    fontSize: SIZES.large,
+    fontWeight: 'bold',
+    color: COLORS.textDark,
+    flex: 1,
+    textAlign: 'center',
+  },
+  modalCloseButton: {
+    padding: SIZES.padding / 2,
+  },
+  modalCancelButton: {
+    padding: SIZES.padding / 2,
+    minWidth: 80,
+  },
+  modalConfirmButton: {
+    padding: SIZES.padding / 2,
+    minWidth: 80,
+    alignItems: 'flex-end',
+  },
+  pickerContainer: {
+    paddingVertical: SIZES.padding,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  picker: {
+    width: '100%',
+    height: Platform.OS === 'ios' ? 216 : 180,
+    backgroundColor: COLORS.background,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: SIZES.padding * 2,
+    paddingTop: SIZES.padding,
+    paddingBottom: SIZES.padding,
+    gap: SIZES.margin,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: SIZES.padding + 4,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  modalButtonCancel: {
+    backgroundColor: COLORS.inputBackground,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  modalButtonConfirm: {
+    backgroundColor: COLORS.primaryBlue,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalButtonCancelText: {
+    fontSize: SIZES.medium,
+    fontWeight: '600',
+    color: COLORS.textDark,
+  },
+  modalButtonConfirmText: {
+    fontSize: SIZES.medium,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

@@ -283,10 +283,18 @@ const RecoverPasswordScreen = ({ navigation }) => {
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  keyboardType="default"
+                  returnKeyType="next"
+                  textContentType={Platform.OS === 'ios' ? 'newPassword' : undefined}
+                  autoComplete={Platform.OS === 'android' ? 'password-new' : undefined}
+                  editable={true}
+                  selectTextOnFocus={false}
+                  enablesReturnKeyAutomatically={true}
                 />
                 <TouchableOpacity
                   style={styles.eyeIcon}
                   onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off' : 'eye'}
@@ -310,10 +318,18 @@ const RecoverPasswordScreen = ({ navigation }) => {
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
+                  keyboardType="default"
+                  returnKeyType="done"
+                  textContentType={Platform.OS === 'ios' ? 'newPassword' : undefined}
+                  autoComplete={Platform.OS === 'android' ? 'password-new' : undefined}
+                  editable={true}
+                  selectTextOnFocus={false}
+                  enablesReturnKeyAutomatically={true}
                 />
                 <TouchableOpacity
                   style={styles.eyeIcon}
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  activeOpacity={0.7}
                 >
                   <Ionicons
                     name={showConfirmPassword ? 'eye-off' : 'eye'}

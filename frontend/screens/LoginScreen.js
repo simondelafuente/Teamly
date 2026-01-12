@@ -110,13 +110,22 @@ const LoginScreen = ({ navigation }) => {
                 setPassword(text);
                 setErrorMessage(''); // Limpiar error al escribir
               }}
-              secureTextEntry={!showPassword}
+              secureTextEntry={false} // solo para la demo
               autoCapitalize="none"
               autoCorrect={false}
+              keyboardType="default"
+              returnKeyType="done"
+              textContentType={Platform.OS === 'ios' ? 'password' : undefined}
+              autoComplete={Platform.OS === 'android' ? 'password' : undefined}
+              editable={true}
+              selectTextOnFocus={false}
+              enablesReturnKeyAutomatically={true}
+              onSubmitEditing={handleLogin}
             />
             <TouchableOpacity
               style={styles.eyeIcon}
               onPress={() => setShowPassword(!showPassword)}
+              activeOpacity={0.7}
             >
               <Ionicons
                 name={showPassword ? 'eye-off' : 'eye'}
