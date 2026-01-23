@@ -6,15 +6,15 @@ const AUTH_TOKEN_KEY = '@teamly:auth_token';
 
 const getApiUrl = () => {
   let apiUrl;
-  
-  if (Constants.expoConfig?.extra?.apiUrl) {
-    apiUrl = Constants.expoConfig.extra.apiUrl;
-  } else if (Platform.OS === 'web') {
+
+  if (Platform.OS === 'web') {
     apiUrl = 'http://localhost:3000/api';
+  } else if (Constants.expoConfig?.extra?.apiUrl) {
+    apiUrl = Constants.expoConfig.extra.apiUrl;
   } else {
-    apiUrl = 'http://192.168.0.4:3000/api';
+    apiUrl = 'http://172.30.2.59:3000/api';
   }
-  
+
   return apiUrl;
 };
 
@@ -28,9 +28,10 @@ export const apiConfig = {
   },
 };
 
+
 export const apiRequest = async (endpoint, options = {}) => {
   const url = `${apiConfig.baseURL}${endpoint}`;
-  
+
   // Obtener token de autenticación
   let token = null;
   try {
@@ -38,7 +39,7 @@ export const apiRequest = async (endpoint, options = {}) => {
   } catch (error) {
     console.warn('Error al obtener token:', error);
   }
-  
+
   const config = {
     ...options,
     headers: {
@@ -61,7 +62,7 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(url, config);
-    
+
     let data;
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
@@ -70,7 +71,7 @@ export const apiRequest = async (endpoint, options = {}) => {
       const textData = await response.text();
       data = textData ? { message: textData } : {};
     }
-    
+
     // Si el token es inválido o expirado, limpiar almacenamiento
     if (response.status === 401 && token) {
       try {
@@ -80,7 +81,7 @@ export const apiRequest = async (endpoint, options = {}) => {
         console.warn('Error al limpiar almacenamiento:', e);
       }
     }
-    
+
     if (!response.ok) {
       const errorMessage = data.message || data.error || `Error ${response.status}: ${response.statusText}`;
       const error = new Error(errorMessage);
@@ -88,13 +89,13 @@ export const apiRequest = async (endpoint, options = {}) => {
       error.data = data;
       throw error;
     }
-    
+
     return data;
   } catch (error) {
-    if (error.message.includes('Network request failed') || 
-        error.message.includes('Failed to fetch') ||
-        error.message.includes('ERR_CONNECTION_TIMED_OUT') ||
-        error.message.includes('ERR_CONNECTION_REFUSED')) {
+    if (error.message.includes('Network request failed') ||
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('ERR_CONNECTION_TIMED_OUT') ||
+      error.message.includes('ERR_CONNECTION_REFUSED')) {
       console.error('Error de conexión:', {
         url,
         error: error.message,

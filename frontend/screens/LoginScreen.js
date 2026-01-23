@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SIZES } from '../utils/constants';
@@ -89,7 +79,7 @@ const LoginScreen = ({ navigation }) => {
             value={email}
             onChangeText={(text) => {
               setEmail(text);
-              setErrorMessage(''); // Limpiar error al escribir
+              setErrorMessage('');
             }}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -108,9 +98,9 @@ const LoginScreen = ({ navigation }) => {
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
-                setErrorMessage(''); // Limpiar error al escribir
+                setErrorMessage('');
               }}
-              secureTextEntry={false} // solo para la demo
+              secureTextEntry={true}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="default"
