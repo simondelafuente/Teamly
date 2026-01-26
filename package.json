@@ -7,7 +7,9 @@
     "backend": "cd backend && npm start",
     "backend:dev": "cd backend && npm run dev",
     "frontend": "cd frontend && npm start",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+    "frontend:clear": "cd frontend && npm run start:clear",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "get-ip": "node scripts/get-local-ip.js"
   },
   "keywords": [
     "teamly",

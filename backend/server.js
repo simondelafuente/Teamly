@@ -10,8 +10,20 @@ const startServer = async () => {
     await connectDB();
     
     app.listen(PORT, '0.0.0.0', () => {
+      const os = require('os');
+      const nets = os.networkInterfaces();
+      let localIP = 'localhost';
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+          if (net.family === 'IPv4' && !net.internal) {
+            localIP = net.address;
+            break;
+          }
+        }
+        if (localIP !== 'localhost') break;
+      }
       console.log(`Servidor corriendo en el puerto: ${PORT}`);
-      console.log(`http://localhost:${PORT} y http://192.168.0.4:${PORT}`);
+      console.log(`http://localhost:${PORT} y http://${localIP}:${PORT}`);
     });
   } catch (error) {
     console.error('Error al iniciar el servidor:', error);

@@ -27,7 +27,11 @@
     ],
     "scheme": "teamly",
     "extra": {
+<<<<<<< HEAD
       "apiUrl": "http://172.30.2.59:3000/api"
+=======
+      "apiUrl": "auto"
+>>>>>>> 11b55a19 (ip config)
     }
   }
 }
