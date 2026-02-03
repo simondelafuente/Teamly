@@ -8,8 +8,6 @@ import {
   TextInput,
   Platform,
   Alert,
-  Keyboard,
-  TouchableWithoutFeedback,
   Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -95,7 +93,7 @@ const CreatePublicationScreen = ({ navigation, route }) => {
   const [publicationId, setPublicationId] = useState(isEditMode ? publication.id_publicacion : null);
   const [titulo, setTitulo] = useState(isEditMode ? publication.titulo || '' : '');
   const [actividadSeleccionada, setActividadSeleccionada] = useState(
-    isEditMode && publication.id_actividad 
+    isEditMode && publication.id_actividad
       ? { id_actividad: publication.id_actividad, nombre_actividad: publication.nombre_actividad }
       : null
   );
@@ -103,18 +101,18 @@ const CreatePublicationScreen = ({ navigation, route }) => {
   const [zona, setZona] = useState(isEditMode ? publication.zona || '' : '');
   const [vacantes, setVacantes] = useState(isEditMode ? String(publication.vacantes_disponibles || '') : '');
   const [fecha, setFecha] = useState(
-    isEditMode && publication.fecha 
+    isEditMode && publication.fecha
       ? adjustDate(new Date(publication.fecha))
       : null
   );
   const [hora, setHora] = useState(
     isEditMode && publication.hora
       ? (() => {
-          const timeParts = publication.hora.split(':');
-          const date = new Date();
-          date.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
-          return date;
-        })()
+        const timeParts = publication.hora.split(':');
+        const date = new Date();
+        date.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+        return date;
+      })()
       : null
   );
   const [actividades, setActividades] = useState([]);
@@ -260,10 +258,10 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           setFecha(null);
           setHora(null);
         }
-        
+
         Alert.alert(
           isEditMode ? '¡Publicación Actualizada!' : '¡Publicación Creada!',
-          isEditMode 
+          isEditMode
             ? 'Tu publicación ha sido actualizada exitosamente.'
             : 'Tu publicación ha sido creada exitosamente y ya está visible para todos.',
           [
@@ -280,7 +278,7 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           ],
           { cancelable: false }
         );
-        
+
         setTimeout(() => {
           if (isEditMode) {
             navigation.navigate('UserPublications', { userId: userId });
@@ -302,7 +300,7 @@ const CreatePublicationScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      
+
       {/* Header con botón de volver */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -317,12 +315,12 @@ const CreatePublicationScreen = ({ navigation, route }) => {
         <View style={styles.headerSpacer} />
       </View>
 
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         {/* Campo Título */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Título</Text>
@@ -385,7 +383,7 @@ const CreatePublicationScreen = ({ navigation, route }) => {
                     style={[
                       styles.dropdownItem,
                       actividadSeleccionada?.id_actividad === actividad.id_actividad &&
-                        styles.dropdownItemActive,
+                      styles.dropdownItemActive,
                     ]}
                     onPress={() => {
                       setActividadSeleccionada(actividad);
@@ -397,7 +395,7 @@ const CreatePublicationScreen = ({ navigation, route }) => {
                       style={[
                         styles.dropdownItemText,
                         actividadSeleccionada?.id_actividad === actividad.id_actividad &&
-                          styles.dropdownItemTextActive,
+                        styles.dropdownItemTextActive,
                       ]}
                     >
                       {actividad.nombre_actividad}
@@ -538,8 +536,8 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           />
           {vacantes && (
             <Text style={styles.helperText}>
-              {parseInt(vacantes) === 1 
-                ? '1 vacante disponible' 
+              {parseInt(vacantes) === 1
+                ? '1 vacante disponible'
                 : `${vacantes} vacantes disponibles`}
             </Text>
           )}
@@ -722,8 +720,8 @@ const CreatePublicationScreen = ({ navigation, route }) => {
                 value={
                   hora
                     ? `${String(hora.getHours()).padStart(2, '0')}:${String(
-                        hora.getMinutes()
-                      ).padStart(2, '0')}`
+                      hora.getMinutes()
+                    ).padStart(2, '0')}`
                     : ''
                 }
                 onChange={(timeString) => {
@@ -752,8 +750,8 @@ const CreatePublicationScreen = ({ navigation, route }) => {
                 <Text style={styles.dateButtonText}>
                   {hora
                     ? `${String(hora.getHours()).padStart(2, '0')}:${String(
-                        hora.getMinutes()
-                      ).padStart(2, '0')}`
+                      hora.getMinutes()
+                    ).padStart(2, '0')}`
                     : 'Selecciona una hora'}
                 </Text>
               </TouchableOpacity>
@@ -898,13 +896,12 @@ const CreatePublicationScreen = ({ navigation, route }) => {
           disabled={loading}
         >
           <Text style={styles.createButtonText}>
-            {loading 
-              ? (isEditMode ? 'Actualizando...' : 'Creando...') 
+            {loading
+              ? (isEditMode ? 'Actualizando...' : 'Creando...')
               : (isEditMode ? 'Actualizar Publicación' : 'Crear Publicación')}
           </Text>
         </TouchableOpacity>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+      </ScrollView>
 
       {/* Footer de Navegación */}
       <View style={styles.footerContainer}>

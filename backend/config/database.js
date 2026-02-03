@@ -3,16 +3,16 @@ const { Pool } = require('pg');
 
 const connectionString = process.env.SUPABASE_DB_URL;
 const requiresSSL = connectionString && (
-  connectionString.includes('supabase.co') || 
+  connectionString.includes('supabase.co') ||
   connectionString.includes('supabase') ||
   process.env.DB_REQUIRE_SSL === 'true'
 );
 
 const poolConfig = {
   connectionString: connectionString,
-  max: requiresSSL ? 3 : 5, 
+  max: requiresSSL ? 3 : 5,
   min: 0,
-  idleTimeoutMillis: requiresSSL ? 5000 : 10000, 
+  idleTimeoutMillis: requiresSSL ? 5000 : 10000,
   connectionTimeoutMillis: 10000,
   allowExitOnIdle: false,
   statement_timeout: 30000,
@@ -28,9 +28,7 @@ if (requiresSSL) {
   poolConfig.ssl = false;
 }
 
-
 const pool = new Pool(poolConfig);
-
 
 const connectDB = async () => {
   if (!connectionString) {
@@ -59,18 +57,18 @@ const connectDB = async () => {
 
 pool.on('error', (err) => {
   const errorMessage = err.message || err.toString();
-  
+
   const ignorableErrors = [
     'client_termination',
     'shutdown',
     'Connection terminated',
     'Connection ended',
   ];
-  
-  const isIgnorable = ignorableErrors.some(ignorable => 
+
+  const isIgnorable = ignorableErrors.some(ignorable =>
     errorMessage.includes(ignorable)
   );
-  
+
   if (!isIgnorable) {
     console.error('⚠️ Error en el pool de conexiones:', errorMessage);
   }
